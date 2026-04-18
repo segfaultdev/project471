@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" fill="none">
+  <rect width="400" height="100" fill="transparent"/>
+  <g>
+    <text x="20" y="65" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="48" font-weight="700" fill="#2563eb">
+      Shoplinker
+    </text>
+  </g>
+</svg>

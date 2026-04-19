@@ -3,7 +3,13 @@
  * This class represents the 'users' table in PostgreSQL
  * TypeORM will automatically create/update this table based on these decorators
  */
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
 
 /**
@@ -12,8 +18,8 @@ import { Exclude } from 'class-transformer';
  * Database will store as string, but TypeScript enforces the values
  */
 export enum UserRole {
-  CUSTOMER = 'customer',   // Regular customer/buyer
-  VENDOR = 'vendor',       // Store owner/seller
+  CUSTOMER = 'customer', // Regular customer/buyer
+  VENDOR = 'vendor', // Store owner/seller
   SUPERUSER = 'superuser', // Content moderator
 }
 
@@ -44,8 +50,7 @@ export class User {
   // Only values from UserRole enum are allowed
   // Database stores as string (e.g., 'customer', 'admin')
   @Column({
-    type: 'enum',
-    enum: UserRole,
+    type: 'varchar',
     default: UserRole.CUSTOMER,
   })
   role: UserRole;

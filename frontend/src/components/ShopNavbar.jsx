@@ -1,0 +1,66 @@
+import { Link } from "react-router-dom";
+import { ShoppingCart, Heart, User } from "lucide-react";
+
+const ShopNavbar = () => {
+  // Get cart count from localStorage
+  const getCartCount = () => {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  return (
+    <nav className="border-b border-slate-100 bg-white">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo/Brand */}
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center gap-3">
+              <img
+                src="/shoplinker.svg"
+                alt="Shoplinker"
+                className="h-8 w-auto"
+              />
+            </Link>
+          </div>
+
+          {/* Right side actions */}
+          <div className="flex items-center gap-4">
+            {/* Cart Button */}
+            <Link
+              to="/cart"
+              className="relative inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              Cart
+              {getCartCount() > 0 && (
+                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-blue-600 text-xs font-bold text-white flex items-center justify-center">
+                  {getCartCount()}
+                </span>
+              )}
+            </Link>
+
+            {/* Wishlist Button */}
+            <Link
+              to="/wishlist"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              <Heart className="h-4 w-4" />
+              Wishlist
+            </Link>
+
+            {/* Sign In Button */}
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              <User className="h-4 w-4" />
+              Sign In
+            </Link>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+export default ShopNavbar;

@@ -1,19 +1,30 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import Navbar from './components/Navbar';
-import ProtectedRoute from './components/ProtectedRoute';
-import Homepage from './pages/Homepage';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import MyStores from './pages/MyStores';
-import MyProducts from './pages/MyProducts';
-import Products from './pages/Products';
-import Stores from './pages/Stores';
-import StoreDetail from './pages/StoreDetail';
-import Sell from './pages/Sell';
-import ImportProduct from './pages/ImportProduct';
-import BulkImport from './pages/BulkImport';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Homepage from "./pages/Homepage";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import MyStores from "./pages/MyStores";
+import MyProducts from "./pages/MyProducts";
+import Products from "./pages/Products";
+import Stores from "./pages/Stores";
+import StoreDetail from "./pages/StoreDetail";
+import ProductDetail from "./pages/ProductDetail";
+import Cart from "./pages/Cart";
+import Wishlist from "./pages/Wishlist";
+import Checkout from "./pages/Checkout";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import Sell from "./pages/Sell";
+import ImportProduct from "./pages/ImportProduct";
+import BulkImport from "./pages/BulkImport";
+import MyOrders from "./pages/MyOrders";
 
 function App() {
   return (
@@ -26,6 +37,11 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/sell" element={<Sell />} />
           <Route path="/store/:slug" element={<StoreDetail />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout/success" element={<CheckoutSuccess />} />
 
           {/* Protected Routes with Navbar */}
           <Route
@@ -107,6 +123,17 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/my-orders"
+            element={
+              <ProtectedRoute requireVendor={true}>
+                <div>
+                  <Navbar />
+                  <MyOrders />
+                </div>
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Router>
     </AuthProvider>
@@ -114,4 +141,3 @@ function App() {
 }
 
 export default App;
-

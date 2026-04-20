@@ -3,7 +3,6 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -27,16 +26,16 @@ export class Order {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ default: '' })
   orderNumber: string; // Unique order identifier
 
   @ManyToOne(() => User, { nullable: true })
   customer: User;
 
-  @ManyToOne(() => Store)
+  @ManyToOne(() => Store, { nullable: true })
   store: Store;
 
-  @Column('json')
+  @Column('simple-json', { nullable: true })
   customerInfo: {
     firstName: string;
     lastName: string;
@@ -45,18 +44,18 @@ export class Order {
     address: string;
     city: string;
     postalCode: string;
-  };
+  } | null;
 
-  @Column('json')
+  @Column('simple-json', { nullable: true })
   items: Array<{
     productId: string;
     name: string;
     price: number;
     quantity: number;
     image?: string;
-  }>;
+  }> | null;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   subtotal: number;
 
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
@@ -65,7 +64,7 @@ export class Order {
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   tax: number;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   total: number;
 
   @Column({

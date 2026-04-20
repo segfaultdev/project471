@@ -89,6 +89,12 @@ export const ordersAPI = {
   getMyOrders: () => api.get("/orders/my-orders"),
   getOne: (id) => api.get(`/orders/${id}`),
   updateStatus: (id, status) => api.patch(`/orders/${id}/status`, { status }),
+  // Sales Analytics
+  getDailySales: (storeId, date) => api.get(`/stores/${storeId}/orders/stats/daily?date=${date}`),
+  getBestSellers: (storeId) => api.get(`/stores/${storeId}/orders/stats/best-sellers`),
+  getReturnRate: (storeId) => api.get(`/stores/${storeId}/orders/stats/return-rate`),
+  getStoreStats: (storeId) => api.get(`/stores/${storeId}/orders/stats/store`),
+  getOrdersByLocation: (storeId) => api.get(`/stores/${storeId}/orders/stats/location`),
 };
 
 // Cart API calls

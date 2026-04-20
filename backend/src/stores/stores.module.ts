@@ -10,13 +10,14 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Store } from './entities/store.entity';
 import { Product } from '../products/entities/product.entity';
+import { Order } from '../orders/order.entity';
 import { StoresService } from './stores.service';
 import { StoresController } from './stores.controller';
 
 @Module({
   imports: [
-    // Register Store and Product entities - needed for cascade deletion
-    TypeOrmModule.forFeature([Store, Product])
+    // Register Store, Product, and the canonical Order entity used across the app
+    TypeOrmModule.forFeature([Store, Product, Order]),
   ],
   controllers: [StoresController], // Register HTTP routes
   providers: [StoresService],      // Register services for dependency injection

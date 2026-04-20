@@ -12,6 +12,7 @@ import {
   ShoppingCart,
   Heart,
   Store as StoreIcon,
+  BarChart3,
 } from "lucide-react";
 import { productsAPI } from "../api/api";
 
@@ -173,15 +174,24 @@ const Navbar = () => {
                   </>
                 )}
                 
-                {/* My Store - Only for vendors */}
+                {/* Vendor navigation */}
                 {isVendor() && (
-                  <Link
-                    to="/my-stores"
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200"
-                  >
-                    <StoreIcon className="h-4 w-4" />
-                    My Store
-                  </Link>
+                  <>
+                    <Link
+                      to="/my-stores"
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200"
+                    >
+                      <StoreIcon className="h-4 w-4" />
+                      My Store
+                    </Link>
+                    <Link
+                      to="/sales-analytics"
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      Sales Analytics
+                    </Link>
+                  </>
                 )}
                 
                 {/* Notifications - Only for vendors */}

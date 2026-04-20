@@ -26,6 +26,7 @@ import ImportProduct from "./pages/ImportProduct";
 import BulkImport from "./pages/BulkImport";
 import MyOrders from "./pages/MyOrders";
 import CustomerOrders from "./pages/CustomerOrders";
+import SalesAnalytics from './pages/SalesAnalytics';
 
 function App() {
   return (
@@ -162,6 +163,17 @@ function App() {
                 <div>
                   <Navbar />
                   <CustomerOrders />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sales-analytics"
+            element={
+              <ProtectedRoute requireVendor={true}>
+                <div>
+                  <Navbar />
+                  <SalesAnalytics />
                 </div>
               </ProtectedRoute>
             }

@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   CheckCircle2,
@@ -158,6 +160,14 @@ function SectionHeading({ eyebrow, title, description }) {
 
 export default function Homepage() {
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
   
   return (
     <main className="min-h-screen bg-white text-slate-900">

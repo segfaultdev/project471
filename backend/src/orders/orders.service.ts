@@ -59,6 +59,15 @@ export class OrdersService {
     });
   }
 
+  async findByCustomer(customerEmail: string): Promise<Order[]> {
+    return this.ordersRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.store', 'store')
+      .where("json_extract(order.customerInfo, '$.email') = :email", { email: customerEmail })
+      .orderBy('order.createdAt', 'DESC')
+      .getMany();
+  }
+
   async findOne(id: string): Promise<Order> {
     const order = await this.ordersRepository.findOne({
       where: { id },
@@ -75,7 +84,8 @@ export class OrdersService {
   async updateStatus(id: string, status: OrderStatus): Promise<Order> {
     const order = await this.findOne(id);
     order.status = status;
-    return this.ordersRepository.save(order);
+    await this.ordersRepository.update(id, { status });
+    return { ...order, status };
   }
 
   private generateOrderNumber(): string {

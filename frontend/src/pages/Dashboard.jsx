@@ -16,6 +16,8 @@ import {
   ExternalLink,
   BarChart3,
   ArrowUpRight,
+  ShoppingCart,
+  Heart,
 } from "lucide-react";
 import { storesAPI, productsAPI, ordersAPI } from "../api/api";
 
@@ -34,14 +36,46 @@ const Dashboard = () => {
     pendingOrders: 0,
     completedOrders: 0,
   });
+  const [customerStats, setCustomerStats] = useState({
+    cartCount: 0,
+    wishlistCount: 0,
+    orderCount: 0,
+  });
 
   useEffect(() => {
     if (isVendor()) {
       fetchVendorData();
     } else {
-      setLoading(false);
+      fetchCustomerData();
     }
   }, []);
+
+  useEffect(() => {
+    if (isVendor()) {
+      return undefined;
+    }
+
+    const updateLocalCounts = () => {
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+
+      setCustomerStats((prev) => ({
+        ...prev,
+        cartCount,
+        wishlistCount: wishlist.length,
+      }));
+    };
+
+    updateLocalCounts();
+    window.addEventListener("cartUpdated", updateLocalCounts);
+    window.addEventListener("wishlistUpdated", updateLocalCounts);
+
+    return () => {
+      window.removeEventListener("cartUpdated", updateLocalCounts);
+      window.removeEventListener("wishlistUpdated", updateLocalCounts);
+    };
+  }, [isVendor]);
 
   const fetchVendorData = async () => {
     try {
@@ -92,6 +126,32 @@ const Dashboard = () => {
       });
     } catch (error) {
       console.error("Failed to fetch vendor data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCustomerData = async () => {
+    try {
+      setLoading(true);
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+
+      let orderCount = 0;
+      try {
+        const ordersResponse = await ordersAPI.getMyOrders();
+        const ordersData = ordersResponse.data || ordersResponse;
+        orderCount = ordersData.length;
+      } catch (error) {
+        console.error("Failed to fetch customer orders:", error);
+      }
+
+      setCustomerStats({
+        cartCount,
+        wishlistCount: wishlist.length,
+        orderCount,
+      });
     } finally {
       setLoading(false);
     }
@@ -582,7 +642,7 @@ const Dashboard = () => {
                   Recent Orders
                 </h2>
                 <Link
-                  to="/my-orders"
+                  to={isVendor() ? "/my-orders" : "/customer-orders"}
                   className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                 >
                   View all →
@@ -664,58 +724,126 @@ const Dashboard = () => {
   }
 
   // Customer Dashboard
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
       <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl mb-4">
+        {/* Welcome Section */}
+        <div className="mb-12 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 mb-4">
+            <div className="h-2 w-2 rounded-full bg-blue-600"></div>
+            <span className="text-sm font-semibold text-blue-700 uppercase tracking-wider">
+              Customer Dashboard
+            </span>
+          </div>
+          <h1 className="text-5xl font-bold text-slate-900 mb-4">
             Welcome back, {user?.firstName}! 👋
           </h1>
-          <p className="text-lg text-slate-600">
-            Explore products and stores from all vendors
+          <p className="text-xl text-slate-600">
+            Your shopping hub for amazing products and stores
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2 max-w-4xl">
+        {/* Quick Actions */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
           <Link
-            to="/products"
-            className="group rounded-3xl border border-slate-200 bg-white p-8 hover:border-slate-300 transition-colors"
+            to="/cart"
+            className="group rounded-3xl border border-slate-200 bg-white p-8 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
           >
             <div className="flex items-start justify-between mb-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                <ShoppingBag className="h-6 w-6" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg">
+                <ShoppingCart className="h-7 w-7" />
               </div>
               <div className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">
-                Browse
+                {customerStats.cartCount > 0
+                  ? `${customerStats.cartCount} items`
+                  : "Empty"}
               </div>
             </div>
             <h3 className="text-2xl font-bold text-slate-900 mb-3">
-              Browse Products
+              My Cart
             </h3>
             <p className="text-slate-600 leading-7">
-              Explore products from all vendors
+              View and manage your shopping cart
             </p>
           </Link>
 
           <Link
-            to="/stores"
-            className="group rounded-3xl border border-slate-200 bg-white p-8 hover:border-slate-300 transition-colors"
+            to="/wishlist"
+            className="group rounded-3xl border border-slate-200 bg-white p-8 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
           >
             <div className="flex items-start justify-between mb-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                <Building2 className="h-6 w-6" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-red-500 to-pink-600 text-white shadow-lg">
+                <Heart className="h-7 w-7" />
               </div>
-              <div className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">
-                Discover
+              <div className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600">
+                {customerStats.wishlistCount > 0
+                  ? `${customerStats.wishlistCount} items`
+                  : "Empty"}
               </div>
             </div>
             <h3 className="text-2xl font-bold text-slate-900 mb-3">
-              Browse Stores
+              My Wishlist
             </h3>
             <p className="text-slate-600 leading-7">
-              Discover stores and vendors in our marketplace
+              Your saved favorite products
             </p>
           </Link>
+
+          <Link
+            to={isVendor() ? "/my-orders" : "/customer-orders"}
+            className="group rounded-3xl border border-slate-200 bg-white p-8 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+          >
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-lg">
+                <Package className="h-7 w-7" />
+              </div>
+              <div className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-600">
+                {customerStats.orderCount} placed
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-3">
+              My Orders
+            </h3>
+            <p className="text-slate-600 leading-7">
+              Track your order history
+            </p>
+          </Link>
+        </div>
+
+        {/* Featured Section */}
+        <div className="mt-16 rounded-3xl bg-gradient-to-r from-blue-600 to-blue-700 p-12 text-white shadow-2xl">
+          <div className="text-center max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold mb-4">
+              Start Shopping Today!
+            </h2>
+            <p className="text-xl text-blue-100 mb-8">
+              Discover amazing products from trusted vendors in our marketplace
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link
+                to="/stores"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 font-semibold text-blue-700 shadow-lg transition-all duration-200 hover:bg-blue-50 hover:shadow-xl"
+              >
+                <Store className="h-5 w-5" />
+                Browse Stores
+              </Link>
+              <Link
+                to="/products"
+                className="inline-flex items-center gap-2 rounded-xl border-2 border-white px-8 py-4 font-semibold text-white transition-all duration-200 hover:bg-white/10"
+              >
+                <ShoppingBag className="h-5 w-5" />
+                Browse Products
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

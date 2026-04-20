@@ -9,6 +9,7 @@ import {
   Clock,
   Loader2,
   AlertCircle,
+  Store,
 } from "lucide-react";
 
 const MyOrders = () => {
@@ -38,8 +39,10 @@ const MyOrders = () => {
       const response = await storesAPI.getMyStores();
       const storesData = response.data || response;
       setStores(storesData);
+      setLoading(false);
     } catch (error) {
       console.error("Failed to fetch stores:", error);
+      setLoading(false);
     }
   };
 
@@ -72,7 +75,7 @@ const MyOrders = () => {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       setUpdatingOrder(orderId);
-      await ordersAPI.updateStatus(orderId, { status: newStatus });
+      await ordersAPI.updateStatus(orderId, newStatus);
 
       // Update local state
       setOrders(
@@ -92,11 +95,7 @@ const MyOrders = () => {
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800";
-      case "processing":
-        return "bg-blue-100 text-blue-800";
-      case "shipped":
-        return "bg-purple-100 text-purple-800";
-      case "completed":
+      case "confirmed":
         return "bg-green-100 text-green-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
@@ -109,11 +108,7 @@ const MyOrders = () => {
     switch (status) {
       case "pending":
         return <Clock className="h-4 w-4" />;
-      case "processing":
-        return <Package className="h-4 w-4" />;
-      case "shipped":
-        return <Package className="h-4 w-4" />;
-      case "completed":
+      case "confirmed":
         return <CheckCircle className="h-4 w-4" />;
       case "cancelled":
         return <XCircle className="h-4 w-4" />;
@@ -122,10 +117,43 @@ const MyOrders = () => {
     }
   };
 
-  if (loading && stores.length === 0) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (stores.length === 0) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">
+              My Orders
+            </h1>
+            <p className="text-lg text-slate-600">
+              View and manage all orders for your stores
+            </p>
+          </div>
+          <div className="rounded-xl bg-white border border-slate-200 p-12 shadow-sm text-center">
+            <Store className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">
+              No Stores Found
+            </h3>
+            <p className="text-slate-600 mb-6">
+              You need to create a store first before you can view orders.
+            </p>
+            <a
+              href="/my-stores"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-all duration-200 hover:bg-blue-700"
+            >
+              <Store className="h-5 w-5" />
+              Create Your First Store
+            </a>
+          </div>
+        </div>
       </div>
     );
   }
@@ -134,36 +162,26 @@ const MyOrders = () => {
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
         {/* Header */}
-        <div className="rounded-2xl bg-white border border-slate-200 p-8 mb-8 shadow-md">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex-1">
-              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 mb-4">
-                <div className="h-2 w-2 rounded-full bg-blue-600"></div>
-                <span className="text-sm font-semibold text-blue-700 uppercase tracking-wider">
-                  Order Management
-                </span>
-              </div>
-              <h1 className="text-4xl font-bold text-slate-900 mb-2">
-                Manage Your Orders
-              </h1>
-              <p className="text-slate-600 text-lg">
-                View and manage all orders for your stores.
-              </p>
-            </div>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">
+            My Orders
+          </h1>
+          <p className="text-lg text-slate-600">
+            View and manage all orders for your stores
+          </p>
         </div>
 
         {/* Filters */}
-        <div className="rounded-2xl bg-white border border-slate-200 p-6 mb-8 shadow-md">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="flex-1">
+        <div className="rounded-xl bg-white border border-slate-200 p-6 mb-8 shadow-sm">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Select Store
               </label>
               <select
                 value={selectedStore}
                 onChange={(e) => setSelectedStore(e.target.value)}
-                className="w-full md:w-64 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 {stores.map((store) => (
                   <option key={store.id} value={store.id}>
@@ -172,20 +190,18 @@ const MyOrders = () => {
                 ))}
               </select>
             </div>
-            <div className="flex-1">
+            <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Filter by Status
               </label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full md:w-64 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Orders</option>
                 <option value="pending">Pending</option>
-                <option value="processing">Processing</option>
-                <option value="shipped">Shipped</option>
-                <option value="completed">Completed</option>
+                <option value="confirmed">Confirmed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
@@ -194,13 +210,13 @@ const MyOrders = () => {
 
         {/* Orders List */}
         {loading ? (
-          <div className="rounded-2xl bg-white border border-slate-200 p-8 shadow-md">
+          <div className="rounded-xl bg-white border border-slate-200 p-8 shadow-sm">
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
             </div>
           </div>
         ) : orders.length === 0 ? (
-          <div className="rounded-2xl bg-white border border-slate-200 p-8 shadow-md">
+          <div className="rounded-xl bg-white border border-slate-200 p-8 shadow-sm">
             <div className="text-center py-12">
               <Package className="h-16 w-16 text-slate-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-slate-900 mb-2">
@@ -218,7 +234,7 @@ const MyOrders = () => {
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="rounded-2xl bg-white border border-slate-200 p-6 shadow-md"
+                className="rounded-xl bg-white border border-slate-200 p-6 shadow-sm"
               >
                 {/* Order Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -332,52 +348,21 @@ const MyOrders = () => {
                   </div>
                   <div className="flex gap-2">
                     {order.status === "pending" && (
-                      <button
-                        onClick={() =>
-                          updateOrderStatus(order.id, "processing")
-                        }
-                        disabled={updatingOrder === order.id}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                      >
-                        {updatingOrder === order.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Package className="h-4 w-4" />
-                        )}
-                        Process Order
-                      </button>
-                    )}
-                    {order.status === "processing" && (
-                      <button
-                        onClick={() => updateOrderStatus(order.id, "shipped")}
-                        disabled={updatingOrder === order.id}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 disabled:opacity-50"
-                      >
-                        {updatingOrder === order.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Package className="h-4 w-4" />
-                        )}
-                        Mark as Shipped
-                      </button>
-                    )}
-                    {(order.status === "processing" ||
-                      order.status === "shipped") && (
-                      <button
-                        onClick={() => updateOrderStatus(order.id, "completed")}
-                        disabled={updatingOrder === order.id}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50"
-                      >
-                        {updatingOrder === order.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <CheckCircle className="h-4 w-4" />
-                        )}
-                        Mark as Completed
-                      </button>
-                    )}
-                    {order.status !== "completed" &&
-                      order.status !== "cancelled" && (
+                      <>
+                        <button
+                          onClick={() =>
+                            updateOrderStatus(order.id, "confirmed")
+                          }
+                          disabled={updatingOrder === order.id}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50"
+                        >
+                          {updatingOrder === order.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4" />
+                          )}
+                          Confirm Order
+                        </button>
                         <button
                           onClick={() =>
                             updateOrderStatus(order.id, "cancelled")
@@ -392,7 +377,8 @@ const MyOrders = () => {
                           )}
                           Cancel Order
                         </button>
-                      )}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

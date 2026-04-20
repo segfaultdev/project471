@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { productsAPI, ordersAPI } from "../api/api";
+import { productsAPI, ordersAPI, paymentAPI } from "../api/api";
+import { useAuth } from "../context/AuthContext";
 import {
   Loader2,
   ArrowLeft,
@@ -10,11 +11,13 @@ import {
   User,
   Phone,
   Mail,
+  Lock,
 } from "lucide-react";
 import ShopNavbar from "../components/ShopNavbar";
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -26,12 +29,25 @@ const Checkout = () => {
     address: "",
     city: "",
     postalCode: "",
-    paymentMethod: "cod", // cash on delivery
+    paymentMethod: "card", // card or cod
+    cardNumber: "",
+    cardHolderName: "",
+    expiryDate: "",
+    cvv: "",
   });
 
   useEffect(() => {
+    // Auto-fill user data
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+      }));
+    }
     loadCart();
-  }, []);
+  }, [user]);
 
   const loadCart = async () => {
     try {
@@ -131,9 +147,57 @@ const Checkout = () => {
       return;
     }
 
+    // Validate card details if paying by card
+    if (formData.paymentMethod === "card") {
+      if (!formData.cardNumber || !formData.cardHolderName || !formData.expiryDate || !formData.cvv) {
+        alert("Please fill in all card details");
+        return;
+      }
+      if (!/^\d{16}$/.test(formData.cardNumber.replace(/\s/g, ''))) {
+        alert("Card number must be 16 digits");
+        return;
+      }
+      if (!/^\d{3}$/.test(formData.cvv)) {
+        alert("CVV must be 3 digits");
+        return;
+      }
+      if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(formData.expiryDate)) {
+        alert("Expiry date must be in MM/YY format");
+        return;
+      }
+    }
+
     setProcessing(true);
 
     try {
+      let paymentResult = null;
+
+      // Process payment if card payment
+      if (formData.paymentMethod === "card") {
+        try {
+          const paymentResponse = await paymentAPI.processPayment({
+            amount: getTotal(),
+            cardNumber: formData.cardNumber.replace(/\s/g, ''),
+            cardHolderName: formData.cardHolderName,
+            expiryDate: formData.expiryDate,
+            cvv: formData.cvv,
+          });
+
+          if (!paymentResponse.data.success) {
+            alert(`Payment failed: ${paymentResponse.data.message}`);
+            setProcessing(false);
+            return;
+          }
+
+          paymentResult = paymentResponse.data;
+        } catch (error) {
+          console.error("Payment failed:", error);
+          alert("Payment processing failed. Please check your card details.");
+          setProcessing(false);
+          return;
+        }
+      }
+
       // Prepare order data
       const orderData = {
         storeId: cartItems[0].store.id,
@@ -149,15 +213,18 @@ const Checkout = () => {
         items: cartItems.map((item) => ({
           productId: item.id,
           name: item.name,
-          price: item.price,
+          price: parseFloat(item.price),
           quantity: item.quantity,
-          image: item.image,
+          image: item.images && item.images.length > 0 ? item.images[0] : undefined,
         })),
-        subtotal: getSubtotal(),
-        shipping: getShipping(),
-        tax: getTax(),
-        total: getTotal(),
+        subtotal: parseFloat(getSubtotal().toFixed(2)),
+        shipping: parseFloat(getShipping().toFixed(2)),
+        tax: parseFloat(getTax().toFixed(2)),
+        total: parseFloat(getTotal().toFixed(2)),
         paymentMethod: formData.paymentMethod,
+        notes: formData.paymentMethod === "card" && paymentResult 
+          ? `Payment processed. Transaction ID: ${paymentResult.transactionId}` 
+          : undefined,
       };
 
       // Create order via API
@@ -165,6 +232,7 @@ const Checkout = () => {
 
       // Clear cart
       localStorage.removeItem("cart");
+      window.dispatchEvent(new Event("cartUpdated"));
 
       // Redirect to success page
       navigate("/checkout/success");
@@ -225,7 +293,7 @@ const Checkout = () => {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none"
                     required
                   />
                 </div>
@@ -238,7 +306,7 @@ const Checkout = () => {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none"
                     required
                   />
                 </div>
@@ -255,7 +323,7 @@ const Checkout = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full rounded-lg border border-slate-300 pl-10 pr-3 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 pl-10 pr-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none"
                     required
                   />
                 </div>
@@ -272,7 +340,7 @@ const Checkout = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="w-full rounded-lg border border-slate-300 pl-10 pr-3 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 pl-10 pr-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none"
                     required
                   />
                 </div>
@@ -296,7 +364,7 @@ const Checkout = () => {
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none"
                     placeholder="123 Main Street"
                     required
                   />
@@ -312,7 +380,7 @@ const Checkout = () => {
                       name="city"
                       value={formData.city}
                       onChange={handleInputChange}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none"
                       required
                     />
                   </div>
@@ -325,7 +393,7 @@ const Checkout = () => {
                       name="postalCode"
                       value={formData.postalCode}
                       onChange={handleInputChange}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none"
                       required
                     />
                   </div>
@@ -340,8 +408,95 @@ const Checkout = () => {
                 Payment Method
               </h2>
 
-              <div className="space-y-3">
-                <label className="flex items-center">
+              <div className="space-y-4">
+                <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-slate-50 transition">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="card"
+                    checked={formData.paymentMethod === "card"}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="ml-3 text-sm font-medium text-slate-700">
+                    Credit/Debit Card
+                  </span>
+                </label>
+
+                {formData.paymentMethod === "card" && (
+                  <div className="ml-7 space-y-4 p-4 bg-slate-50 rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Card Number *
+                      </label>
+                      <input
+                        type="text"
+                        name="cardNumber"
+                        value={formData.cardNumber}
+                        onChange={handleInputChange}
+                        placeholder="1234 5678 9012 3456"
+                        maxLength="19"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Test: Use any 16 digits except starting with 0000
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Card Holder Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="cardHolderName"
+                        value={formData.cardHolderName}
+                        onChange={handleInputChange}
+                        placeholder="John Doe"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                          Expiry Date *
+                        </label>
+                        <input
+                          type="text"
+                          name="expiryDate"
+                          value={formData.expiryDate}
+                          onChange={handleInputChange}
+                          placeholder="MM/YY"
+                          maxLength="5"
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                          CVV *
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <input
+                            type="text"
+                            name="cvv"
+                            value={formData.cvv}
+                            onChange={handleInputChange}
+                            placeholder="123"
+                            maxLength="3"
+                            className="w-full rounded-lg border border-slate-300 pl-10 pr-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none"
+                          />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Test: Use any 3 digits except 000
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <label className="flex items-center p-3 border-2 rounded-lg cursor-pointer hover:bg-slate-50 transition">
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -354,9 +509,11 @@ const Checkout = () => {
                     Cash on Delivery
                   </span>
                 </label>
-                <p className="text-xs text-slate-500 ml-7">
-                  Pay when your order is delivered to your door
-                </p>
+                {formData.paymentMethod === "cod" && (
+                  <p className="text-xs text-slate-500 ml-7">
+                    Pay when your order is delivered to your door
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -388,7 +545,7 @@ const Checkout = () => {
                       <p className="text-sm font-medium text-slate-900 truncate">
                         {item.name}
                       </p>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-slate-600">
                         Qty: {item.quantity} × ৳{item.price}
                       </p>
                     </div>
@@ -402,19 +559,19 @@ const Checkout = () => {
               <div className="border-t border-slate-200 pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Subtotal</span>
-                  <span>৳{getSubtotal().toFixed(2)}</span>
+                  <span className="text-slate-900 font-semibold">৳{getSubtotal().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Shipping</span>
-                  <span>
+                  <span className="text-slate-900 font-semibold">
                     {getShipping() === 0 ? "Free" : `৳${getShipping()}`}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Tax (15%)</span>
-                  <span>৳{getTax().toFixed(2)}</span>
+                  <span className="text-slate-900 font-semibold">৳{getTax().toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-lg font-bold border-t border-slate-200 pt-2">
+                <div className="flex justify-between text-lg font-bold border-t border-slate-200 pt-2 text-slate-900">
                   <span>Total</span>
                   <span>৳{getTotal().toFixed(2)}</span>
                 </div>

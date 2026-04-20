@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react';
-import { productsAPI } from '../api/api';
-import { Package, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { productsAPI, cartAPI } from '../api/api';
+import { Package, Loader2, ShoppingCart, Heart } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Products = () => {
+  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [wishlist, setWishlist] = useState([]);
 
   useEffect(() => {
     fetchProducts();
+    loadWishlist();
   }, []);
+
+  const loadWishlist = () => {
+    const savedWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    setWishlist(savedWishlist);
+  };
 
   const fetchProducts = async () => {
     try {
@@ -21,6 +31,62 @@ const Products = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddToCart = async (product, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      // If not logged in, use localStorage
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const existingItem = cart.find(item => item.id === product.id);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        cart.push({ id: product.id, quantity: 1 });
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cartUpdated'));
+      alert('Added to cart!');
+      return;
+    }
+
+    try {
+      await cartAPI.addToCart(product.id, 1);
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const existingItem = cart.find(item => item.id === product.id);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        cart.push({ id: product.id, quantity: 1 });
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cartUpdated'));
+      alert('Added to cart!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to add to cart');
+    }
+  };
+
+  const handleAddToWishlist = (product, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const currentWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    if (!currentWishlist.includes(product.id)) {
+      currentWishlist.push(product.id);
+      localStorage.setItem('wishlist', JSON.stringify(currentWishlist));
+      setWishlist(currentWishlist);
+      window.dispatchEvent(new Event('wishlistUpdated'));
+      alert('Added to wishlist!');
+    } else {
+      alert('Already in wishlist!');
+    }
+  };
+
+  const isInWishlist = (productId) => {
+    return wishlist.includes(productId);
   };
 
   if (loading) {
@@ -59,8 +125,9 @@ const Products = () => {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {products.map((product) => (
-              <div
+              <Link
                 key={product.id}
+                to={`/product/${product.id}`}
                 className="group rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-md transition-all duration-200 hover:border-slate-300 hover:shadow-lg"
               >
                 {/* Product Image */}
@@ -112,6 +179,28 @@ const Products = () => {
                     </span>
                   </div>
 
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 mb-4">
+                    <button
+                      onClick={(e) => handleAddToCart(product, e)}
+                      disabled={product.stock === 0}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                      Add to Cart
+                    </button>
+                    <button
+                      onClick={(e) => handleAddToWishlist(product, e)}
+                      className={`inline-flex items-center justify-center rounded-xl border-2 px-3 py-2 transition ${
+                        isInWishlist(product.id)
+                          ? 'border-red-500 bg-red-50 text-red-600'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-red-500 hover:text-red-600'
+                      }`}
+                    >
+                      <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+                    </button>
+                  </div>
+
                   {product.store && (
                     <div className="pt-4 border-t border-slate-100">
                       <p className="text-sm text-slate-600">
@@ -120,7 +209,7 @@ const Products = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

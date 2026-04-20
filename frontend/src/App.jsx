@@ -25,6 +25,7 @@ import Sell from "./pages/Sell";
 import ImportProduct from "./pages/ImportProduct";
 import BulkImport from "./pages/BulkImport";
 import MyOrders from "./pages/MyOrders";
+import CustomerOrders from "./pages/CustomerOrders";
 
 function App() {
   return (
@@ -38,8 +39,6 @@ function App() {
           <Route path="/sell" element={<Sell />} />
           <Route path="/store/:slug" element={<StoreDetail />} />
           <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/checkout/success" element={<CheckoutSuccess />} />
 
@@ -73,6 +72,28 @@ function App() {
                 <div>
                   <Navbar />
                   <Stores />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <Navbar />
+                  <Cart />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wishlist"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <Navbar />
+                  <Wishlist />
                 </div>
               </ProtectedRoute>
             }
@@ -130,6 +151,17 @@ function App() {
                 <div>
                   <Navbar />
                   <MyOrders />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer-orders"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <Navbar />
+                  <CustomerOrders />
                 </div>
               </ProtectedRoute>
             }

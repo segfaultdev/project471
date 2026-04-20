@@ -38,6 +38,7 @@ const ProductDetail = () => {
       cart.push({ id: product.id, quantity: 1 });
     }
     localStorage.setItem("cart", JSON.stringify(cart));
+    window.dispatchEvent(new Event('cartUpdated'));
     alert("Added to cart!");
   };
 
@@ -46,6 +47,7 @@ const ProductDetail = () => {
     if (!wishlist.includes(product.id)) {
       wishlist.push(product.id);
       localStorage.setItem("wishlist", JSON.stringify(wishlist));
+      window.dispatchEvent(new Event("wishlistUpdated"));
       alert("Added to wishlist!");
     } else {
       alert("Already in wishlist!");

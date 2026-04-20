@@ -86,8 +86,37 @@ export const ordersAPI = {
   create: (orderData) => api.post("/orders", orderData),
   getAll: () => api.get("/orders"),
   getByStore: (storeId) => api.get(`/orders/store/${storeId}`),
+  getMyOrders: () => api.get("/orders/my-orders"),
   getOne: (id) => api.get(`/orders/${id}`),
   updateStatus: (id, status) => api.patch(`/orders/${id}/status`, { status }),
+};
+
+// Cart API calls
+export const cartAPI = {
+  addToCart: (productId, quantity) => api.post("/cart", { productId, quantity }),
+  getCart: () => api.get("/cart"),
+  getCartTotal: () => api.get("/cart/total"),
+  updateCartItem: (itemId, quantity) => api.patch(`/cart/${itemId}`, { quantity }),
+  removeFromCart: (itemId) => api.delete(`/cart/${itemId}`),
+  clearCart: () => api.delete("/cart"),
+};
+
+// Categories API calls
+export const categoriesAPI = {
+  getAll: () => api.get("/categories"),
+  getTopLevel: () => api.get("/categories/top-level"),
+  getOne: (id) => api.get(`/categories/${id}`),
+  getBySlug: (slug) => api.get(`/categories/slug/${slug}`),
+  create: (categoryData) => api.post("/categories", categoryData),
+  update: (id, categoryData) => api.patch(`/categories/${id}`, categoryData),
+  delete: (id) => api.delete(`/categories/${id}`),
+};
+
+// Payment API calls
+export const paymentAPI = {
+  processPayment: (paymentData) => api.post("/payment/process", paymentData),
+  verifyPayment: (transactionId) => api.get(`/payment/verify/${transactionId}`),
+  refundPayment: (transactionId, amount) => api.post(`/payment/refund/${transactionId}`, { amount }),
 };
 
 export default api;

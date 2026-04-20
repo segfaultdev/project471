@@ -80,52 +80,31 @@ const StoreDetail = () => {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
-<<<<<<< HEAD
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
       <ShopNavbar />
-=======
-      {/* Header */}
-      <header className="border-b border-slate-100 bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-4 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Link>
-          </div>
-        </div>
-      </header>
->>>>>>> 159643a2ff8505491287c28cf7ef3d03ec310fc0
 
-      {/* Banner Section */}
-      <section className="w-full">
-        <div className="h-64 w-full bg-gradient-to-br from-blue-100 to-slate-100 overflow-hidden flex items-center justify-center">
+      {/* Hero Banner Section */}
+      <section className="relative w-full h-80 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600">
           {store.banner ? (
             <img
               src={store.banner}
               alt={`${store.name} banner`}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover opacity-80"
               onError={(e) => {
                 e.target.style.display = "none";
-                e.target.parentElement.innerHTML =
-                  '<svg class="h-24 w-24 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>';
               }}
             />
-          ) : (
-            <Store className="h-24 w-24 text-slate-400" />
-          )}
+          ) : null}
         </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-6 pb-12 lg:px-8">
-        {/* Store Info Card */}
-        <div className="-mt-12 rounded-3xl bg-white p-6 border border-slate-200">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center flex-1">
-              <div className="h-24 w-24 rounded-2xl border-2 border-slate-200 bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+        
+        {/* Store Logo & Name Overlay */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <div className="mx-auto max-w-7xl px-6 pb-8 lg:px-8">
+            <div className="flex items-end gap-6">
+              {/* Store Logo */}
+              <div className="h-32 w-32 rounded-3xl bg-white border-4 border-white shadow-2xl overflow-hidden flex items-center justify-center flex-shrink-0">
                 {store.logo ? (
                   <img
                     src={store.logo}
@@ -133,112 +112,136 @@ const StoreDetail = () => {
                     className="h-full w-full object-cover"
                     onError={(e) => {
                       e.target.style.display = "none";
-                      e.target.parentElement.innerHTML = store.name
-                        .charAt(0)
-                        .toUpperCase();
+                      e.target.parentElement.innerHTML = `<span class="text-4xl font-bold text-blue-600">${store.name.charAt(0).toUpperCase()}</span>`;
                     }}
                   />
                 ) : (
-                  store.name.charAt(0).toUpperCase()
+                  <span className="text-4xl font-bold text-blue-600">
+                    {store.name.charAt(0).toUpperCase()}
+                  </span>
                 )}
               </div>
 
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-                  Store
-                </p>
-                <h1 className="mt-2 text-3xl font-bold text-slate-900">
-                  {store.name}
-                </h1>
-                <p className="mt-3 max-w-2xl text-slate-600">
-                  {store.description || "Welcome to our store!"}
-                </p>
+              {/* Store Info */}
+              <div className="flex-1 pb-2">
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-4xl font-bold text-white drop-shadow-lg">
+                    {store.name}
+                  </h1>
+                  <span className="rounded-full bg-green-500 px-4 py-1.5 text-sm font-bold text-white shadow-lg">
+                    ● Active
+                  </span>
+                </div>
                 {store.slug && (
-                  <p className="mt-2 text-sm text-slate-500">
-                    {import.meta.env.VITE_APP_URL}/store/{store.slug}
+                  <p className="text-blue-100 font-medium">
+                    @{store.slug}
                   </p>
                 )}
               </div>
             </div>
-
-            <div className="flex gap-3">
-              <Link
-                to="/stores"
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-600"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                All Stores
-              </Link>
-            </div>
           </div>
+        </div>
+      </section>
 
-          {/* Contact Info */}
-          {(store.address || store.phone || store.email) && (
-            <div className="mt-6 pt-6 border-t border-slate-100">
-              <div className="grid gap-4 sm:grid-cols-3">
+      <section className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+        {/* Store Description & Contact */}
+        <div className="mb-8 rounded-3xl bg-white p-8 border border-slate-200 shadow-lg">
+          <div className="grid gap-8 lg:grid-cols-3">
+            {/* Description */}
+            <div className="lg:col-span-2">
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">About This Store</h2>
+              <p className="text-slate-600 leading-relaxed text-lg">
+                {store.description || "Welcome to our store! Browse our collection of amazing products."}
+              </p>
+            </div>
+
+            {/* Contact Info */}
+            <div className="rounded-2xl bg-slate-50 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Contact Information</h3>
+              <div className="space-y-3">
                 {store.address && (
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">
-                      Address
-                    </p>
-                    <p className="mt-1 text-slate-900">{store.address}</p>
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-blue-100 p-2">
+                      <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase">Address</p>
+                      <p className="text-slate-900 font-medium">{store.address}</p>
+                    </div>
                   </div>
                 )}
                 {store.phone && (
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Phone</p>
-                    <p className="mt-1 text-slate-900">{store.phone}</p>
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-green-100 p-2">
+                      <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase">Phone</p>
+                      <p className="text-slate-900 font-medium">{store.phone}</p>
+                    </div>
                   </div>
                 )}
                 {store.email && (
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Email</p>
-                    <p className="mt-1 text-slate-900">{store.email}</p>
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-purple-100 p-2">
+                      <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase">Email</p>
+                      <p className="text-slate-900 font-medium">{store.email}</p>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Products Section */}
-        <section className="mt-10">
+        <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">Products</h2>
-            <p className="text-sm text-slate-500">
-              {products.length} {products.length === 1 ? "product" : "products"}{" "}
-              available
-            </p>
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900">Our Products</h2>
+              <p className="text-slate-600 mt-1">
+                {products.length} {products.length === 1 ? "product" : "products"} available
+              </p>
+            </div>
           </div>
 
           {products.length === 0 ? (
-            <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 mx-auto mb-6">
-                <Package className="h-10 w-10" />
+            <div className="rounded-3xl border border-slate-200 bg-white p-16 text-center shadow-lg">
+              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-slate-100 text-slate-400 mx-auto mb-6">
+                <Package className="h-12 w-12" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">
                 No Products Yet
               </h3>
-              <p className="text-slate-600">
-                This store hasn't added any products yet.
+              <p className="text-slate-600 text-lg">
+                This store hasn't added any products yet. Check back soon!
               </p>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="overflow-hidden rounded-3xl bg-white border border-slate-200 transition hover:border-slate-300"
+                  className="group overflow-hidden rounded-3xl bg-white border border-slate-200 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
                 >
-<<<<<<< HEAD
-                  {/* Product Image - Clickable */}
-                  <Link to={`/product/${product.id}`}>
-                    <div className="h-56 w-full bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden flex items-center justify-center cursor-pointer">
+                  {/* Product Image */}
+                  <Link to={`/product/${product.id}`} className="block">
+                    <div className="h-56 w-full bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden flex items-center justify-center relative">
                       {product.images && product.images.length > 0 ? (
                         <img
                           src={product.images[0]}
                           alt={product.name}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                           onError={(e) => {
                             e.target.style.display = "none";
                             e.target.parentElement.innerHTML =
@@ -248,65 +251,50 @@ const StoreDetail = () => {
                       ) : (
                         <Package className="h-16 w-16 text-slate-400" />
                       )}
+                      
+                      {/* Stock Badge */}
+                      <div className="absolute top-3 right-3">
+                        <span className={`rounded-full px-3 py-1.5 text-xs font-bold shadow-lg backdrop-blur-sm ${
+                          product.stock > 10
+                            ? 'bg-green-500/90 text-white'
+                            : product.stock > 0
+                            ? 'bg-yellow-500/90 text-white'
+                            : 'bg-red-500/90 text-white'
+                        }`}>
+                          {product.stock > 0 ? `${product.stock} left` : 'Out of stock'}
+                        </span>
+                      </div>
                     </div>
                   </Link>
 
                   <div className="p-6">
-                    {/* Product Title - Clickable */}
                     <Link to={`/product/${product.id}`}>
-                      <h3 className="text-xl font-semibold text-slate-900 line-clamp-2 cursor-pointer hover:text-blue-600 transition">
+                      <h3 className="text-xl font-bold text-slate-900 line-clamp-2 mb-3 hover:text-blue-600 transition">
                         {product.name}
                       </h3>
                     </Link>
-=======
-                  {/* Product Image */}
-                  <div className="h-56 w-full bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden flex items-center justify-center">
-                    {product.images && product.images.length > 0 ? (
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                          e.target.parentElement.innerHTML =
-                            '<svg class="h-16 w-16 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>';
-                        }}
-                      />
-                    ) : (
-                      <Package className="h-16 w-16 text-slate-400" />
-                    )}
-                  </div>
-
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold text-slate-900 line-clamp-2">
-                      {product.name}
-                    </h3>
->>>>>>> 159643a2ff8505491287c28cf7ef3d03ec310fc0
 
                     {product.description && (
-                      <p className="mt-2 text-sm text-slate-600 line-clamp-2">
+                      <p className="text-sm text-slate-600 line-clamp-2 mb-4 leading-relaxed">
                         {product.description}
                       </p>
                     )}
 
-                    <div className="mt-4 flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-4">
                       <div>
-                        <p className="text-2xl font-bold text-blue-600">
+                        <p className="text-3xl font-bold text-blue-600">
                           ৳{product.price}
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          Stock: {product.stock}
                         </p>
                       </div>
                       {product.category && (
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                           {product.category}
                         </span>
                       )}
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="mt-4 flex gap-2">
+                    <div className="flex gap-2">
                       <button
                         onClick={() => {
                           const cart = JSON.parse(
@@ -321,9 +309,11 @@ const StoreDetail = () => {
                             cart.push({ id: product.id, quantity: 1 });
                           }
                           localStorage.setItem("cart", JSON.stringify(cart));
+                          window.dispatchEvent(new Event('cartUpdated'));
                           alert("Added to cart!");
+                          window.dispatchEvent(new Event('storage'));
                         }}
-                        className="flex-1 inline-flex items-center justify-center gap-1 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-sm font-semibold text-white transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={product.stock === 0}
                       >
                         <ShoppingCart className="h-4 w-4" />
@@ -340,15 +330,15 @@ const StoreDetail = () => {
                               "wishlist",
                               JSON.stringify(wishlist),
                             );
+                            window.dispatchEvent(new Event("wishlistUpdated"));
                             alert("Added to wishlist!");
                           } else {
                             alert("Already in wishlist!");
                           }
                         }}
-                        className="inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                        className="inline-flex items-center justify-center rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-red-500 hover:bg-red-50 hover:text-red-600"
                       >
                         <Heart className="h-4 w-4" />
-                        Wishlist
                       </button>
                     </div>
                   </div>

@@ -5,6 +5,7 @@
  */
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Store } from '../../stores/entities/store.entity';
+import { Category } from '../../categories/category.entity';
 
 @Entity('products') // Creates table named 'products'
 export class Product {
@@ -32,6 +33,14 @@ export class Product {
   // Product category (e.g., 'Electronics', 'Clothing', 'Food')
   @Column({ nullable: true })
   category: string;
+
+  // Category relationship
+  @ManyToOne(() => Category, category => category.products, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'categoryId' })
+  categoryEntity: Category;
+
+  @Column({ nullable: true })
+  categoryId: string;
 
   // Product images - stored as JSON array of URLs
   // Example: ["url1.jpg", "url2.jpg"]

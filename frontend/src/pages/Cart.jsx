@@ -9,7 +9,6 @@ import {
   Trash2,
   ArrowLeft,
 } from "lucide-react";
-import ShopNavbar from "../components/ShopNavbar";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -70,6 +69,7 @@ const Cart = () => {
       item.id === productId ? { ...item, quantity: newQuantity } : item,
     );
     localStorage.setItem("cart", JSON.stringify(updatedCartStorage));
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   const removeFromCart = (productId) => {
@@ -80,6 +80,7 @@ const Cart = () => {
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
     const updatedCartStorage = cart.filter((item) => item.id !== productId);
     localStorage.setItem("cart", JSON.stringify(updatedCartStorage));
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   const getTotalPrice = () => {
@@ -95,13 +96,10 @@ const Cart = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <ShopNavbar />
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-            <p className="text-slate-600 text-lg">Loading cart...</p>
-          </div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-slate-600 text-lg">Loading cart...</p>
         </div>
       </div>
     );
@@ -109,8 +107,6 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <ShopNavbar />
-
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
         <div className="mb-8">
           <Link
@@ -191,7 +187,7 @@ const Cart = () => {
                     <p className="text-2xl font-bold text-blue-600 mt-1">
                       ৳{item.price}
                     </p>
-                    <p className="text-sm text-slate-500 mt-1">
+                    <p className="text-sm text-slate-600 mt-1">
                       Stock: {item.stock}
                     </p>
                   </div>
@@ -203,11 +199,11 @@ const Cart = () => {
                         onClick={() =>
                           updateQuantity(item.id, item.quantity - 1)
                         }
-                        className="h-8 w-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                        className="h-8 w-8 rounded-lg border border-slate-300 flex items-center justify-center hover:bg-slate-50 text-slate-700"
                       >
                         <Minus className="h-4 w-4" />
                       </button>
-                      <span className="w-12 text-center font-semibold">
+                      <span className="w-12 text-center font-semibold text-slate-900">
                         {item.quantity}
                       </span>
                       <button
@@ -215,7 +211,7 @@ const Cart = () => {
                           updateQuantity(item.id, item.quantity + 1)
                         }
                         disabled={item.quantity >= item.stock}
-                        className="h-8 w-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-8 w-8 rounded-lg border border-slate-300 flex items-center justify-center hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700"
                       >
                         <Plus className="h-4 w-4" />
                       </button>
@@ -240,26 +236,26 @@ const Cart = () => {
                 </h2>
 
                 <div className="space-y-3 mb-6">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-slate-700">
                     <span className="text-slate-600">
                       Subtotal ({getTotalItems()} items)
                     </span>
-                    <span className="font-semibold">৳{getTotalPrice()}</span>
+                    <span className="font-semibold text-slate-900">৳{getTotalPrice()}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-slate-700">
                     <span className="text-slate-600">Shipping</span>
-                    <span className="font-semibold">৳50</span>
+                    <span className="font-semibold text-slate-900">৳50</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-slate-700">
                     <span className="text-slate-600">Tax</span>
-                    <span className="font-semibold">
+                    <span className="font-semibold text-slate-900">
                       ৳{(getTotalPrice() * 0.15).toFixed(2)}
                     </span>
                   </div>
                 </div>
 
                 <div className="border-t border-slate-200 pt-4 mb-6">
-                  <div className="flex justify-between text-lg font-bold">
+                  <div className="flex justify-between text-lg font-bold text-slate-900">
                     <span>Total</span>
                     <span>
                       ৳

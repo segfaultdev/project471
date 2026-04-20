@@ -168,6 +168,7 @@ const BulkImport = () => {
                 'Price': 99.99,
                 'Stock': 50,
                 'Category': 'Electronics',
+                'Subcategory': 'Smartphones',
                 'Weight': 1.5
             }
         ]);
@@ -220,7 +221,7 @@ const BulkImport = () => {
                                 <h3 className="font-bold text-slate-900 mb-1">Fill in Your Data</h3>
                                 <p className="text-slate-600 text-sm">
                                     <strong>Sheet 1 - Stores:</strong> Store Name, Description, Address, Phone, Email, Slug<br />
-                                    <strong>Sheet 2 - Products:</strong> Store Name, Product Name, Description, Price, Stock, Category, Weight
+                                    <strong>Sheet 2 - Products:</strong> Store Name, Product Name, Description, Price, Stock, Category, Subcategory, Weight
                                 </p>
                             </div>
                         </div>

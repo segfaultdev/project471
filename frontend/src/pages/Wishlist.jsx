@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { productsAPI } from "../api/api";
 import { Loader2, Heart, ShoppingCart, Trash2, ArrowLeft } from "lucide-react";
-import ShopNavbar from "../components/ShopNavbar";
 
 const Wishlist = () => {
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -55,6 +54,7 @@ const Wishlist = () => {
     const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
     const updatedWishlistStorage = wishlist.filter((id) => id !== productId);
     localStorage.setItem("wishlist", JSON.stringify(updatedWishlistStorage));
+    window.dispatchEvent(new Event("wishlistUpdated"));
   };
 
   const addToCart = (product) => {
@@ -69,13 +69,13 @@ const Wishlist = () => {
     }
 
     localStorage.setItem("cart", JSON.stringify(cart));
+    window.dispatchEvent(new Event('cartUpdated'));
     alert("Added to cart!");
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <ShopNavbar />
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
@@ -88,8 +88,6 @@ const Wishlist = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <ShopNavbar />
-
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
         <div className="mb-8">
           <Link

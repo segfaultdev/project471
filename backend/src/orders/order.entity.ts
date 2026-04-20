@@ -13,9 +13,6 @@ import { Store } from '../stores/entities/store.entity';
 export enum OrderStatus {
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
-  PROCESSING = 'processing',
-  SHIPPED = 'shipped',
-  DELIVERED = 'delivered',
   CANCELLED = 'cancelled',
 }
 
@@ -52,7 +49,7 @@ export class Order {
 
   @Column('json')
   items: Array<{
-    productId: number;
+    productId: string;
     name: string;
     price: number;
     quantity: number;

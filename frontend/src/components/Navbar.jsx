@@ -8,6 +8,10 @@ import {
   AlertTriangle,
   ChevronDown,
   CheckCircle2,
+  LayoutDashboard,
+  ShoppingCart,
+  Heart,
+  Store as StoreIcon,
 } from "lucide-react";
 import { productsAPI } from "../api/api";
 
@@ -18,7 +22,41 @@ const Navbar = () => {
   const [lowStockProducts, setLowStockProducts] = useState([]);
   const [productCount, setProductCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const prevLowStockCount = useRef(0);
+
+  // Update cart count
+  const updateCartCount = () => {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const count = cart.reduce((total, item) => total + item.quantity, 0);
+    setCartCount(count);
+  };
+
+  const updateWishlistCount = () => {
+    const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+    setWishlistCount(wishlist.length);
+  };
+
+  useEffect(() => {
+    updateCartCount();
+    updateWishlistCount();
+
+    const handleCartUpdate = () => {
+      updateCartCount();
+    };
+    const handleWishlistUpdate = () => {
+      updateWishlistCount();
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    window.addEventListener('wishlistUpdated', handleWishlistUpdate);
+
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -89,24 +127,66 @@ const Navbar = () => {
             />
           </Link>
 
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-6">
             {isAuthenticated ? (
               <>
                 <Link
                   to="/dashboard"
-                  className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200"
                 >
+                  <LayoutDashboard className="h-4 w-4" />
                   Dashboard
                 </Link>
-                {isVendor() && (
+                
+                {/* Cart and Wishlist - Only for customers */}
+                {!isVendor() && (
                   <>
                     <Link
-                      to="/my-stores"
-                      className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200"
+                      to="/cart"
+                      className="relative inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200"
                     >
-                      My Store
+                      <span className="relative inline-flex">
+                        <ShoppingCart className="h-4 w-4" />
+                        {cartCount > 0 && (
+                          <span className="absolute -right-2 -top-2 min-w-5 rounded-full bg-blue-600 px-1.5 text-center text-[10px] font-bold leading-5 text-white">
+                            {cartCount}
+                          </span>
+                        )}
+                      </span>
+                      Cart
                     </Link>
-                    <div className="relative">
+                    
+                    <Link
+                      to="/wishlist"
+                      className="relative inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200"
+                    >
+                      <span className="relative inline-flex">
+                        <Heart className="h-4 w-4" />
+                        {wishlistCount > 0 && (
+                          <span className="absolute -right-2 -top-2 min-w-5 rounded-full bg-red-500 px-1.5 text-center text-[10px] font-bold leading-5 text-white">
+                            {wishlistCount}
+                          </span>
+                        )}
+                      </span>
+                      Wishlist
+                    </Link>
+                  </>
+                )}
+                
+                {/* My Store - Only for vendors */}
+                {isVendor() && (
+                  <Link
+                    to="/my-stores"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200"
+                  >
+                    <StoreIcon className="h-4 w-4" />
+                    My Store
+                  </Link>
+                )}
+                
+                {/* Notifications - Only for vendors */}
+                {isVendor() && (
+                  <div className="relative">
                       <button
                         type="button"
                         onClick={() => setShowNotifications((prev) => !prev)}
@@ -173,7 +253,6 @@ const Navbar = () => {
                         </div>
                       )}
                     </div>
-                  </>
                 )}
                 <div className="flex items-center gap-4 ml-4 pl-4 border-l border-slate-200">
                   <div className="flex items-center gap-2">

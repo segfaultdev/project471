@@ -17,8 +17,8 @@ export enum PaymentMethod {
 }
 
 export class OrderItemDto {
-  @IsNumber()
-  productId: number;
+  @IsString()
+  productId: string;
 
   @IsString()
   name: string;

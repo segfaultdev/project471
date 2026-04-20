@@ -19,6 +19,9 @@ import { AuthModule } from './auth/auth.module';
 import { StoresModule } from './stores/stores.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
+import { CartModule } from './cart/cart.module';
+import { CategoriesModule } from './categories/categories.module';
+import { PaymentModule } from './payment/payment.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -45,6 +48,9 @@ import { RolesGuard } from './auth/guards/roles.guard';
     StoresModule, // Store/Vendor management (CRUD operations)
     ProductsModule, // Product catalog (CRUD operations)
     OrdersModule, // Order management (CRUD operations)
+    CartModule, // Shopping cart management
+    CategoriesModule, // Product categories and subcategories
+    PaymentModule, // Payment processing (fake gateway for testing)
   ],
 
   controllers: [AppController], // Root controller

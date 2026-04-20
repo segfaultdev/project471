@@ -81,4 +81,20 @@ export const productsAPI = {
   delete: (id) => api.delete(`/products/${id}`),
 };
 
+// Orders API calls (via stores module)
+export const ordersAPI = {
+  create: (orderData) => api.post('/stores/orders', orderData),
+  getAll: () => api.get('/stores/orders'),
+  getOne: (id) => api.get(`/stores/orders/${id}`),
+  getMyOrders: (storeId) => api.get(`/stores/${storeId}/orders`),
+  updateStatus: (id, status) => api.patch(`/stores/orders/${id}/status`, { status }),
+  
+  // Sales Analytics
+  getDailySales: (storeId, date) => api.get(`/stores/${storeId}/orders/stats/daily?date=${date}`),
+  getBestSellers: (storeId) => api.get(`/stores/${storeId}/orders/stats/best-sellers`),
+  getReturnRate: (storeId) => api.get(`/stores/${storeId}/orders/stats/return-rate`),
+  getStoreStats: (storeId) => api.get(`/stores/${storeId}/orders/stats/store`),
+  getOrdersByLocation: (storeId) => api.get(`/stores/${storeId}/orders/stats/location`),
+};
+
 export default api;

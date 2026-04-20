@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, BarChart3 } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout, isAuthenticated, isVendor } = useAuth();
@@ -35,6 +35,9 @@ const Navbar = () => {
                     </Link>
                     <Link to="/my-products" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200">
                       My Products
+                    </Link>
+                    <Link to="/sales-analytics" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200">
+                      Sales Analytics
                     </Link>
                   </>
                 )}

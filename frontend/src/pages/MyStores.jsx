@@ -2,6 +2,57 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { storesAPI } from '../api/api';
 
+const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024;
+const IMAGE_DIMENSION_LIMITS = {
+  logo: { label: 'Logo', maxWidth: 512, maxHeight: 512 },
+  banner: { label: 'Banner', maxWidth: 1200, maxHeight: 400 },
+};
+
+const resizeImageToLimit = (file, limit) =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      const scale = Math.min(
+        limit.maxWidth / image.naturalWidth,
+        limit.maxHeight / image.naturalHeight,
+        1,
+      );
+      const width = Math.max(1, Math.round(image.naturalWidth * scale));
+      const height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const context = canvas.getContext('2d');
+      if (!context) {
+        reject(new Error('Unable to process image'));
+        return;
+      }
+
+      context.drawImage(image, 0, 0, width, height);
+
+      const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      const dataUrl =
+        outputType === 'image/jpeg'
+          ? canvas.toDataURL(outputType, 0.86)
+          : canvas.toDataURL(outputType);
+
+      resolve(dataUrl);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Unable to read image'));
+    };
+
+    image.src = objectUrl;
+  });
+
 const MyStores = () => {
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,36 +94,49 @@ const MyStores = () => {
     });
   };
 
-  const handleFileChange = (e, fieldName) => {
+  const handleFileChange = async (e, fieldName) => {
     const file = e.target.files[0];
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
         setError('Please select a valid image file');
+        e.target.value = '';
         return;
       }
       
       // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > MAX_IMAGE_FILE_SIZE) {
         setError('Image size should be less than 5MB');
+        e.target.value = '';
         return;
       }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result;
-        setFormData({
-          ...formData,
+      try {
+        const limit = IMAGE_DIMENSION_LIMITS[fieldName];
+        const base64String = limit
+          ? await resizeImageToLimit(file, limit)
+          : await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = () => reject(new Error('Unable to read image'));
+              reader.readAsDataURL(file);
+            });
+
+        setError('');
+        setFormData((currentFormData) => ({
+          ...currentFormData,
           [fieldName]: base64String,
-        });
-        
+        }));
+
         if (fieldName === 'logo') {
           setLogoPreview(base64String);
         } else if (fieldName === 'banner') {
           setBannerPreview(base64String);
         }
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        setError(err.message);
+        e.target.value = '';
+      }
     }
   };
 
@@ -324,7 +388,7 @@ const MyStores = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                           <span className="text-sm font-medium text-slate-600">Upload Logo</span>
-                          <span className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB</span>
+                          <span className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB, resizes to 512x512 max</span>
                         </div>
                         <input
                           type="file"
@@ -370,7 +434,7 @@ const MyStores = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                           <span className="text-sm font-medium text-slate-600">Upload Banner</span>
-                          <span className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB (1200x400 recommended)</span>
+                          <span className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB, resizes to 1200x400 max</span>
                         </div>
                         <input
                           type="file"

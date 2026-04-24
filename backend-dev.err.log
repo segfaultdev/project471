@@ -1,0 +1,127 @@
+[31m[Nest] 18700  - [39m04/24/2026, 8:36:56 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3000[39m[38;5;3m +2ms[39m
+node:net:1948
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+    at listenInCluster (node:net:2005:12)
+    at Server.listen (node:net:2110:7)
+    at ExpressAdapter.listen (C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\platform-express\adapters\express-adapter.js:127:32)
+    at C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\core\nest-application.js:188:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\core\nest-application.js:178:16)
+    at async bootstrap (C:\Users\User\Desktop\project471\backend\src\main.ts:62:3) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+
+Node.js v24.14.0
+[31m[Nest] 4388  - [39m04/24/2026, 8:50:58 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3000[39m[38;5;3m +1ms[39m
+node:net:1948
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+    at listenInCluster (node:net:2005:12)
+    at Server.listen (node:net:2110:7)
+    at ExpressAdapter.listen (C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\platform-express\adapters\express-adapter.js:127:32)
+    at C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\core\nest-application.js:188:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\core\nest-application.js:178:16)
+    at async bootstrap (C:\Users\User\Desktop\project471\backend\src\main.ts:62:3) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+
+Node.js v24.14.0
+node:internal/modules/cjs/loader:1459
+  throw err;
+  ^
+
+Error: Cannot find module 'C:\Users\User\Desktop\project471\backend\dist\main'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1456:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)
+    at Module._load (node:internal/modules/cjs/loader:1242:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v24.14.0
+[31m[Nest] 2448  - [39m04/24/2026, 8:56:58 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3000[39m[38;5;3m +2ms[39m
+node:net:1948
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+    at listenInCluster (node:net:2005:12)
+    at Server.listen (node:net:2110:7)
+    at ExpressAdapter.listen (C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\platform-express\adapters\express-adapter.js:127:32)
+    at C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\core\nest-application.js:188:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\core\nest-application.js:178:16)
+    at async bootstrap (C:\Users\User\Desktop\project471\backend\src\main.ts:62:3) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+
+Node.js v24.14.0
+[31m[Nest] 19004  - [39m04/24/2026, 8:59:48 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3000[39m[38;5;3m +2ms[39m
+node:net:1948
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+    at listenInCluster (node:net:2005:12)
+    at Server.listen (node:net:2110:7)
+    at ExpressAdapter.listen (C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\platform-express\adapters\express-adapter.js:127:32)
+    at C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\core\nest-application.js:188:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\core\nest-application.js:178:16)
+    at async bootstrap (C:\Users\User\Desktop\project471\backend\src\main.ts:62:3) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+
+Node.js v24.14.0
+[31m[Nest] 13728  - [39m04/24/2026, 9:00:57 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3000[39m[38;5;3m +2ms[39m
+node:net:1948
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:1948:16)
+    at listenInCluster (node:net:2005:12)
+    at Server.listen (node:net:2110:7)
+    at ExpressAdapter.listen (C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\platform-express\adapters\express-adapter.js:127:32)
+    at C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\core\nest-application.js:188:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (C:\Users\User\Desktop\project471\backend\node_modules\@nestjs\core\nest-application.js:178:16)
+    at async bootstrap (C:\Users\User\Desktop\project471\backend\src\main.ts:62:3) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+
+Node.js v24.14.0

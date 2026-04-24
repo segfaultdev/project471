@@ -9,7 +9,8 @@ import {
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { OrderStatus } from './order.entity';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -20,8 +21,8 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
-  async create(@Body() createOrderDto: CreateOrderDto) {
-    return this.ordersService.create(createOrderDto);
+  async create(@Body() createOrderDto: CreateOrderDto, @CurrentUser() user: any) {
+    return this.ordersService.create(createOrderDto, user.id);
   }
 
   @Get()
@@ -50,7 +51,7 @@ export class OrdersController {
   @Roles(UserRole.VENDOR)
   async updateStatus(
     @Param('id') id: string,
-    @Body() body: { status: OrderStatus },
+    @Body() body: UpdateOrderStatusDto,
   ) {
     return this.ordersService.updateStatus(id, body.status);
   }

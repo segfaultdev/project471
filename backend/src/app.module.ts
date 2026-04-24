@@ -19,6 +19,7 @@ import { AuthModule } from './auth/auth.module';
 import { StoresModule } from './stores/stores.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
+import { ReviewsModule } from './reviews/reviews.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -45,6 +46,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     StoresModule, // Store/Vendor management (CRUD operations)
     ProductsModule, // Product catalog (CRUD operations)
     OrdersModule, // Order management (CRUD operations)
+    ReviewsModule, // Product reviews and ratings
   ],
 
   controllers: [AppController], // Root controller

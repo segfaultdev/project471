@@ -72,7 +72,7 @@ const MyOrders = () => {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       setUpdatingOrder(orderId);
-      await ordersAPI.updateStatus(orderId, { status: newStatus });
+      await ordersAPI.updateStatus(orderId, newStatus);
 
       // Update local state
       setOrders(

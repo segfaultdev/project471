@@ -1,616 +1,661 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   ArrowRight,
-  CheckCircle2,
-  Facebook,
-  Globe,
-  Link2,
+  BarChart3,
+  Bell,
+  Boxes,
+  CreditCard,
+  Heart,
   Menu,
-  MessageCircle,
-  ShieldCheck,
+  Package,
+  Search,
+  ShoppingBag,
+  ShoppingCart,
   Sparkles,
+  Star,
   Store,
+  Users,
+  X,
 } from 'lucide-react';
 
-const features = [
+const navLinks = [
+  { label: 'Features', href: '#features' },
+  { label: 'How It Works', href: '#how-it-works' },
+  { label: 'Shop on Shoplinker', href: '#shop' },
+  { label: 'FAQ', href: '#faq' },
+];
+
+const VENDOR_REGISTER_PATH = '/register?role=vendor';
+const CUSTOMER_REGISTER_PATH = '/register?role=customer';
+const VENDOR_STORE_PATH = '/my-stores';
+const AUTHENTICATED_SHOP_PATH = '/stores';
+
+const showcaseItems = [
+  'Fashion stores',
+  'Gadget sellers',
+  'Beauty brands',
+  'Home shops',
+  'Food pages',
+  'Local boutiques',
+];
+
+const sellerFeatures = [
   {
     icon: Store,
-    title: "Launch your store quickly",
-    description:
-      "Add your logo, shop name, banner, contact details, and business info to create a professional storefront without code.",
+    title: 'Storefront builder',
+    description: 'Create a polished store with logo, banner, category, contact details, and a shareable store URL.',
   },
   {
-    icon: Facebook,
-    title: "Import from Facebook",
-    description:
-      "Connect your Facebook page or paste product post links to bring your catalog into your site faster.",
+    icon: Package,
+    title: 'Product uploads',
+    description: 'Add products manually or import from Facebook and Instagram links, then edit price, stock, and description.',
   },
   {
-    icon: Link2,
-    title: "Manual or assisted product upload",
-    description:
-      "Add products manually, paste post links, and manage all listings from one simple dashboard.",
+    icon: Boxes,
+    title: 'Inventory control',
+    description: 'Track quantities, spot low stock early, and keep products updated before buyers place orders.',
   },
   {
-    icon: Globe,
-    title: "Grow beyond Messenger",
-    description:
-      "Give customers a real website where they can browse products and trust your brand more easily.",
+    icon: ShoppingCart,
+    title: 'Order workflow',
+    description: 'Move orders through Pending, Confirmed, Shipped, Delivered, or Returned from one clean panel.',
   },
   {
-    icon: MessageCircle,
-    title: "Built for social sellers",
-    description:
-      "Designed for businesses that already sell through Facebook posts, comments, and Messenger conversations.",
+    icon: CreditCard,
+    title: 'Flexible payments',
+    description: 'Support bKash, Nagad, SSLCOMMERZ, and Cash on Delivery for Bangladesh-first commerce.',
   },
   {
-    icon: ShieldCheck,
-    title: "More trust, better presence",
-    description:
-      "A branded website makes your business look more established and helps customers shop with confidence.",
+    icon: BarChart3,
+    title: 'Seller analytics',
+    description: 'See daily sales, best-selling products, return rate, and growth signals from your dashboard.',
   },
 ];
 
-const steps = [
-  "Add your shop name, logo, banner, and business details",
-  "Connect your Facebook page or paste product post links",
-  "Review imported products and edit pricing, images, and descriptions",
-  "Publish your storefront and start receiving more organized orders",
+const buyerFeatures = [
+  {
+    icon: Search,
+    title: 'Search stores and products',
+    description: 'Customers can search by store name or product type, then discover sellers who match what they need.',
+  },
+  {
+    icon: ShoppingBag,
+    title: 'Shop from trusted stores',
+    description: 'Browse storefronts, product details, prices, stock updates, and available payment options in one place.',
+  },
+  {
+    icon: Star,
+    title: 'Compare before buying',
+    description: 'Compare similar products from multiple sellers using price, rating, and delivery estimate.',
+  },
+  {
+    icon: Heart,
+    title: 'Follow favorite stores',
+    description: 'Customers can follow stores and see new products, offers, and updates in a centralized feed.',
+  },
+  {
+    icon: Bell,
+    title: 'Get useful notifications',
+    description: 'Receive discount alerts, product stock updates, and other shopping notifications.',
+  },
+  {
+    icon: Users,
+    title: 'Verified reviews',
+    description: 'Customers can leave ratings and reviews only after a confirmed purchase, keeping feedback more reliable.',
+  },
 ];
 
-const testimonials = [
-  {
-    name: "Nusrat Fashion House",
-    quote:
-      "We used to manage everything through Facebook inbox. With Shoplinker, customers can now browse our products properly before messaging us.",
-  },
-  {
-    name: "Urban Gadget Point",
-    quote:
-      "The idea of turning our Facebook posts into a website is exactly what small sellers need. It saves time and looks much more professional.",
-  },
-  {
-    name: "Daily Needs Mart",
-    quote:
-      "Shoplinker can help local sellers build trust faster because customers see a proper storefront instead of only social posts.",
-  },
+const sellerSteps = [
+  ['Create your store', 'Add your store name, logo, banner, category, or import a profile from Facebook/Instagram.'],
+  ['Add products', 'Upload manually or paste a product post link, then edit price, stock, and description.'],
+  ['Manage operations', 'Track inventory, update order status, create coupons, and monitor sales analytics.'],
+  ['Get paid', 'Enable bKash, Nagad, COD, or SSLCOMMERZ and grow from one dashboard.'],
 ];
 
-const pricing = [
-  {
-    name: "Starter",
-    price: "Free",
-    description: "Perfect for testing your first storefront.",
-    features: [
-      "Basic storefront setup",
-      "Add logo, banner, and shop details",
-      "Manual product upload",
-      "Facebook page link display",
-    ],
-    cta: "Start free",
-    highlighted: false,
-  },
-  {
-    name: "Growth",
-    price: "Coming soon",
-    description: "For active businesses ready to scale online.",
-    features: [
-      "Everything in Starter",
-      "Facebook product import tools",
-      "Better storefront customization",
-      "Product management dashboard",
-    ],
-    cta: "Join waitlist",
-    highlighted: true,
-  },
-  {
-    name: "Business",
-    price: "Custom",
-    description: "For larger sellers and managed onboarding.",
-    features: [
-      "Custom setup support",
-      "Assisted catalog onboarding",
-      "Priority support",
-      "Advanced branding options",
-    ],
-    cta: "Contact sales",
-    highlighted: false,
-  },
+const buyerSteps = [
+  ['Create account', 'Sign up as a customer to save carts, follow stores, and receive updates.'],
+  ['Find products', 'Search by store name or product type and compare options from multiple sellers.'],
+  ['Place order', 'Choose your item, select payment method, and track the shopping flow.'],
+  ['Review purchase', 'After confirmed delivery, leave ratings and reviews to help other buyers.'],
+];
+
+const stats = [
+  { value: '2', label: 'account types for sellers and customers' },
+  { value: '5', label: 'order statuses for clearer operations' },
+  { value: '4', label: 'payment choices for local buyers' },
+  { value: '1', label: 'platform for selling and shopping' },
 ];
 
 const faqs = [
   {
-    question: "Do I need a website already?",
-    answer:
-      "No. Shoplinker is for businesses that may only have a Facebook page and want to create a full storefront from that starting point.",
+    question: 'Can customers create a Shoplinker account?',
+    answer: 'Yes. Customers can create an account to shop, follow stores, compare products, receive notifications, and leave reviews after confirmed purchases.',
   },
   {
-    question: "Can I add products manually?",
-    answer:
-      "Yes. You can manually upload products or paste product post links to speed up the process.",
+    question: 'Can sellers create their own online store?',
+    answer: 'Yes. Sellers can create a mini storefront with logo, banner, category, product listings, inventory, orders, payments, coupons, and analytics.',
   },
   {
-    question: "Is this only for Bangladesh?",
-    answer:
-      "No. The idea is especially relevant in Bangladesh, but it also works for social-commerce businesses in many other countries.",
+    question: 'Can buyers search for products like t-shirts?',
+    answer: 'Yes. Buyers can search by product type and see sellers who offer that kind of product.',
   },
   {
-    question: "Can customers still contact us through Facebook?",
-    answer:
-      "Yes. Your storefront can still show your Facebook page and keep your existing social-selling workflow connected.",
+    question: 'What payment methods are supported?',
+    answer: 'Shoplinker supports bKash, Nagad, SSLCOMMERZ, and Cash on Delivery.',
+  },
+  {
+    question: 'Are reviews open to everyone?',
+    answer: 'No. Buyers can leave ratings and reviews only after a confirmed purchase, which helps keep reviews trustworthy.',
   },
 ];
 
-function SectionHeading({ eyebrow, title, description }) {
+const footerGroups = [
+  {
+    title: 'Platform',
+    links: [
+      { label: 'Features', href: '#features' },
+      { label: 'How It Works', href: '#how-it-works' },
+      { label: 'Shop on Shoplinker', href: '#shop' },
+      { label: 'FAQ', href: '#faq' },
+    ],
+  },
+  {
+    title: 'For sellers',
+    links: [
+      { label: 'Storefronts', href: '#features' },
+      { label: 'Inventory', href: '#features' },
+      { label: 'Orders', href: '#features' },
+      { label: 'Payments', href: '#features' },
+    ],
+  },
+  {
+    title: 'For customers',
+    links: [
+      { label: 'Search products', href: '#shop' },
+      { label: 'Compare sellers', href: '#shop' },
+      { label: 'Follow stores', href: '#shop' },
+      { label: 'Reviews', href: '#shop' },
+    ],
+  },
+];
+
+function SectionLabel({ children, dark = false }) {
   return (
-    <div className="max-w-2xl">
-      <p className="text-sm font-semibold uppercase tracking-[0.22em] text-blue-600">
-        {eyebrow}
-      </p>
-      <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-        {title}
-      </h2>
-      <p className="mt-4 text-lg leading-8 text-slate-600">{description}</p>
+    <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold ${dark ? 'bg-lime-300 text-emerald-950' : 'bg-emerald-100 text-emerald-900'}`}>
+      <Sparkles className="h-4 w-4" />
+      {children}
+    </div>
+  );
+}
+
+function MockProductCard({ title, price, tag, className = '' }) {
+  return (
+    <div className={`rounded-[2rem] border border-black/10 bg-white p-4 shadow-[0_20px_60px_rgba(8,28,21,0.12)] transition duration-500 hover:-translate-y-2 ${className}`}>
+      <div className="h-44 rounded-[1.5rem] bg-gradient-to-br from-emerald-100 via-lime-100 to-amber-100" />
+      <div className="mt-5 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">{tag}</p>
+          <h3 className="mt-2 text-xl font-black text-emerald-950">{title}</h3>
+        </div>
+        <p className="rounded-full bg-emerald-950 px-4 py-2 text-sm font-black text-lime-200">{price}</p>
+      </div>
+    </div>
+  );
+}
+
+function DashboardMockup() {
+  return (
+    <div className="relative mx-auto max-w-5xl">
+      <div className="absolute -left-10 top-14 hidden rotate-[-7deg] md:block">
+        <MockProductCard title="Linen Shirt" price="৳850" tag="Trending" className="w-64" />
+      </div>
+      <div className="absolute -right-8 bottom-8 hidden rotate-[7deg] lg:block">
+        <MockProductCard title="Smart Watch" price="৳2,400" tag="Popular" className="w-64" />
+      </div>
+
+      <div className="relative overflow-hidden rounded-[2.5rem] border border-emerald-900/10 bg-white p-4 shadow-[0_30px_100px_rgba(8,28,21,0.22)]">
+        <div className="rounded-[2rem] bg-emerald-950 p-4 text-white sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
+            <div>
+              <p className="text-sm font-bold text-lime-200">Shoplinker platform</p>
+              <h3 className="mt-1 text-2xl font-black">Sell, shop, and manage</h3>
+            </div>
+            <div className="rounded-full bg-lime-300 px-5 py-2 text-sm font-black text-emerald-950">Live marketplace</div>
+          </div>
+
+          <div className="grid gap-4 py-6 sm:grid-cols-3">
+            {[
+              ['৳42.5k', 'Daily sales'],
+              ['128', 'Orders'],
+              ['4.8★', 'Store rating'],
+            ].map(([value, label]) => (
+              <div key={label} className="rounded-[1.5rem] bg-white/10 p-5 backdrop-blur">
+                <p className="text-3xl font-black text-lime-200">{value}</p>
+                <p className="mt-2 text-sm text-white/70">{label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="rounded-[1.75rem] bg-white p-5 text-emerald-950">
+              <div className="flex items-center justify-between">
+                <h4 className="font-black">Customer journey</h4>
+                <Search className="h-5 w-5 text-emerald-700" />
+              </div>
+              <div className="mt-5 space-y-3">
+                {['Search product', 'Compare sellers', 'Place order', 'Review purchase'].map((status, index) => (
+                  <div key={status} className="flex items-center gap-3 rounded-2xl bg-emerald-50 p-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-950 text-xs font-black text-lime-200">{index + 1}</div>
+                    <span className="font-bold">{status}</span>
+                    <div className="ml-auto h-2 w-20 rounded-full bg-lime-300" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[1.75rem] bg-lime-300 p-5 text-emerald-950">
+              <p className="text-sm font-black uppercase tracking-[0.18em]">Featured store</p>
+              <div className="mt-5 h-28 rounded-[1.5rem] bg-white/60" />
+              <h4 className="mt-5 text-2xl font-black">Nusrat Fashion</h4>
+              <p className="mt-2 text-sm font-semibold text-emerald-900/70">Follow store for new offers</p>
+              <div className="mt-5 flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((item) => (
+                  <Star key={item} className="h-4 w-4 fill-emerald-950 text-emerald-950" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeatureCard({ feature, index }) {
+  const Icon = feature.icon;
+  return (
+    <div className={`group rounded-[2rem] border border-emerald-950/10 p-7 shadow-sm transition duration-500 hover:-translate-y-2 hover:shadow-2xl ${index % 2 === 0 ? 'bg-white' : 'bg-lime-100'}`}>
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-950 text-lime-300 transition group-hover:rotate-6 group-hover:scale-110">
+        <Icon className="h-7 w-7" />
+      </div>
+      <h3 className="mt-8 text-2xl font-black tracking-tight">{feature.title}</h3>
+      <p className="mt-4 leading-7 text-emerald-950/70">{feature.description}</p>
     </div>
   );
 }
 
 export default function Homepage() {
-  const { isAuthenticated } = useAuth();
-  
+  const { isAuthenticated, isVendor } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [storeNotice, setStoreNotice] = useState('');
+
+  const customerShopPath = isAuthenticated ? AUTHENTICATED_SHOP_PATH : CUSTOMER_REGISTER_PATH;
+
+  const showCustomerStoreNotice = () => {
+    setStoreNotice('Your current account is a customer account. Vendor store creation needs a vendor account, so sign in with a vendor account to open your Shoplinker store.');
+  };
+
+  const renderCreateStoreAction = (className, children, onClick) => {
+    if (isAuthenticated && isVendor()) {
+      return (
+        <Link to={VENDOR_STORE_PATH} onClick={onClick} className={className}>
+          {children}
+        </Link>
+      );
+    }
+
+    if (isAuthenticated) {
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            showCustomerStoreNotice();
+            onClick?.();
+          }}
+          className={className}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    return (
+      <Link to={VENDOR_REGISTER_PATH} onClick={onClick} className={className}>
+        {children}
+      </Link>
+    );
+  };
+
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-white to-white" />
-        <div className="absolute left-0 top-0 h-72 w-72 rounded-full bg-blue-100/70 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-cyan-100/70 blur-3xl" />
+    <main className="min-h-screen scroll-smooth bg-[#f6f1e7] text-emerald-950">
+      <header className="sticky top-0 z-50 border-b border-emerald-950/10 bg-[#f6f1e7]/85 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
+          <Link to="/" className="flex items-center gap-3">
+            <img src="/shoplinker.svg" alt="Shoplinker" className="h-9 w-auto" />
+          </Link>
 
-        <div className="relative mx-auto max-w-7xl px-6 py-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="relative h-16 w-48 shrink-0">
-              <img
-                src="/shoplinker.svg"
-                alt="Shoplinker logo"
-                className="h-full w-full object-contain object-left"
-              />
-            </div>
+          <nav className="hidden items-center gap-2 lg:flex">
+            {navLinks.map((link) => (
+              <a key={link.label} href={link.href} className="rounded-full px-4 py-2 text-sm font-bold transition hover:bg-white/70">
+                {link.label}
+              </a>
+            ))}
+          </nav>
 
-            <header className="flex flex-1 flex-wrap items-center justify-between gap-4 rounded-full border border-white/60 bg-white/80 px-6 py-4 shadow-md backdrop-blur md:px-8">
-              <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
-                <a href="#features" className="transition hover:text-blue-600">
-                  Features
-                </a>
-                <a href="#how-it-works" className="transition hover:text-blue-600">
-                  How it works
-                </a>
-                <a href="#pricing" className="transition hover:text-blue-600">
-                  Pricing
-                </a>
-                <Link to="/sell" className="transition hover:text-blue-600">
-                  Sell on Shoplinker
+          <div className="hidden items-center gap-3 md:flex">
+            {isAuthenticated ? (
+              <>
+                <Link to="/dashboard" className="rounded-full px-5 py-3 text-sm font-black transition hover:bg-white/70">
+                  Dashboard
                 </Link>
-                <a href="#faq" className="transition hover:text-blue-600">
-                  FAQ
-                </a>
-              </nav>
-
-              <div className="hidden items-center gap-4 md:flex">
-                {isAuthenticated ? (
-                  <Link to="/dashboard" className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg">
-                    Go to Dashboard
-                  </Link>
-                ) : (
-                  <>
-                    <Link to="/login" className="rounded-lg border border-slate-200 px-5 py-2 text-sm font-semibold transition-all duration-200 hover:border-blue-400 hover:text-blue-600">
-                      Sign in
-                    </Link>
-                    <Link to="/register" className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg">
-                      Get started
-                    </Link>
-                  </>
+                {renderCreateStoreAction(
+                  'rounded-full bg-lime-400 px-6 py-3 text-sm font-black text-emerald-950 shadow-[0_12px_30px_rgba(132,204,22,0.35)] transition hover:-translate-y-0.5 hover:bg-lime-300',
+                  'Create Store'
                 )}
-              </div>
-
-              <button className="rounded-full border border-slate-200 p-2 md:hidden">
-                <Menu className="h-5 w-5" />
-              </button>
-            </header>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="rounded-full px-5 py-3 text-sm font-black transition hover:bg-white/70">
+                  Sign in
+                </Link>
+                {renderCreateStoreAction(
+                  'rounded-full bg-lime-400 px-6 py-3 text-sm font-black text-emerald-950 shadow-[0_12px_30px_rgba(132,204,22,0.35)] transition hover:-translate-y-0.5 hover:bg-lime-300',
+                  'Create Store'
+                )}
+              </>
+            )}
           </div>
 
-          <div className="grid items-center gap-12 py-16 lg:grid-cols-2 lg:py-24">
+          <button onClick={() => setMobileOpen((prev) => !prev)} className="rounded-full bg-white p-3 shadow-sm md:hidden" aria-label="Toggle menu">
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {mobileOpen && (
+          <div className="border-t border-emerald-950/10 bg-[#f6f1e7] px-5 py-5 md:hidden">
+            <div className="flex flex-col gap-3">
+              {navLinks.map((link) => (
+                <a key={link.label} href={link.href} onClick={() => setMobileOpen(false)} className="rounded-2xl bg-white/70 px-4 py-3 font-bold">
+                  {link.label}
+                </a>
+              ))}
+              {isAuthenticated ? (
+                <>
+                  <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="rounded-full bg-emerald-950 px-5 py-3 text-center font-black text-white">Dashboard</Link>
+                  {renderCreateStoreAction(
+                    'rounded-full bg-lime-400 px-5 py-3 text-center font-black text-emerald-950',
+                    'Create Store',
+                    () => setMobileOpen(false)
+                  )}
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="rounded-full bg-white px-5 py-3 text-center font-black">Sign in</Link>
+                  {renderCreateStoreAction(
+                    'rounded-full bg-lime-400 px-5 py-3 text-center font-black text-emerald-950',
+                    'Create Store',
+                    () => setMobileOpen(false)
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </header>
+
+      {storeNotice && (
+        <div className="border-b border-emerald-950/10 bg-lime-200 px-5 py-3 lg:px-8">
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 text-sm font-bold text-emerald-950 sm:flex-row sm:items-center sm:justify-between">
+            <p>{storeNotice}</p>
+            <button
+              type="button"
+              onClick={() => setStoreNotice('')}
+              className="self-start rounded-full bg-emerald-950 px-4 py-2 text-xs font-black text-white transition hover:bg-emerald-900 sm:self-auto"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
+      <section className="relative overflow-hidden px-5 py-16 sm:py-20 lg:px-8 lg:py-24">
+        <div className="absolute left-[-10%] top-20 h-72 w-72 rounded-full bg-lime-300/50 blur-3xl" />
+        <div className="absolute bottom-0 right-[-8%] h-96 w-96 rounded-full bg-emerald-300/30 blur-3xl" />
+
+        <div className="relative mx-auto max-w-7xl">
+          <div className="grid items-center gap-12 lg:grid-cols-[0.92fr_1.08fr]">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
-                <Sparkles className="h-4 w-4" />
-                Built for Facebook-first businesses
-              </div>
-              <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                Turn your Facebook shop into a branded ecommerce website.
+              <SectionLabel>Commerce for sellers and customers</SectionLabel>
+              <h1 className="mt-8 max-w-5xl text-[3.8rem] font-black leading-[0.9] tracking-[-0.07em] text-emerald-950 sm:text-[5.6rem] lg:text-[6.4rem]">
+                Create stores. Discover products. Shop smarter.
               </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-                Shoplinker helps sellers in Bangladesh and beyond launch a professional storefront using their logo, banner, shop details, and Facebook content without starting from scratch.
+              <p className="mt-8 max-w-2xl text-xl leading-8 text-emerald-950/70">
+                Shoplinker helps sellers run online stores and helps customers find trusted stores, compare products, follow sellers, and shop with confidence.
               </p>
-
-              <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                {isAuthenticated ? (
-                  <Link to="/dashboard" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-xl">
-                    Go to Dashboard
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                ) : (
-                  <>
-                    <Link to="/register" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-xl">
-                      Create your store
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                    <button className="rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-blue-400 hover:text-blue-600 hover:shadow-md">
-                      See how it works
-                    </button>
-                  </>
+              <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+                {renderCreateStoreAction(
+                  'inline-flex items-center justify-center gap-2 rounded-full bg-lime-400 px-8 py-4 text-base font-black text-emerald-950 shadow-[0_18px_45px_rgba(132,204,22,0.35)] transition hover:-translate-y-1 hover:bg-lime-300',
+                  <>Create Store <ArrowRight className="h-5 w-5" /></>
                 )}
-              </div>
-
-              <div className="mt-10 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-md transition-all duration-200 hover:shadow-lg hover:border-blue-200">
-                  <p className="text-2xl font-bold text-slate-900">Fast</p>
-                  <p className="mt-1 text-sm text-slate-600">Launch in minutes</p>
-                </div>
-                <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-md transition-all duration-200 hover:shadow-lg hover:border-blue-200">
-                  <p className="text-2xl font-bold text-slate-900">Simple</p>
-                  <p className="mt-1 text-sm text-slate-600">No coding required</p>
-                </div>
-                <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-md transition-all duration-200 hover:shadow-lg hover:border-blue-200">
-                  <p className="text-2xl font-bold text-slate-900">Trusted</p>
-                  <p className="mt-1 text-sm text-slate-600">Professional brand presence</p>
-                </div>
+                <Link to={customerShopPath} className="inline-flex items-center justify-center rounded-full border-2 border-emerald-950 px-8 py-4 text-base font-black transition hover:-translate-y-1 hover:bg-emerald-950 hover:text-white">
+                  Shop on Shoplinker
+                </Link>
               </div>
             </div>
 
-            <div className="relative">
-              <div className="relative rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
-                <div className="rounded-[28px] bg-slate-50 p-5">
-                  <div className="rounded-3xl bg-white p-5 shadow-sm">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-lg font-bold text-white">
-                        S
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold">Your Shop Website</h3>
-                        <p className="text-sm text-slate-500">From Facebook page to storefront</p>
-                      </div>
+            <div className="animate-[fadeIn_0.9s_ease-out]">
+              <DashboardMockup />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-5 pb-16 lg:px-8">
+        <div className="mx-auto max-w-7xl rounded-[2rem] border border-emerald-950/10 bg-white/70 p-6 shadow-sm">
+          <p className="text-center text-sm font-black uppercase tracking-[0.22em] text-emerald-900/60">Shop local stores across categories</p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+            {showcaseItems.map((item) => (
+              <div key={item} className="rounded-2xl bg-[#f6f1e7] px-4 py-5 text-center font-black transition hover:-translate-y-1 hover:bg-lime-200">
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="features" className="px-5 py-20 lg:px-8 lg:py-28">
+        <div className="mx-auto max-w-7xl">
+          <div className="max-w-4xl">
+            <SectionLabel>Seller features</SectionLabel>
+            <h2 className="mt-6 text-5xl font-black leading-none tracking-[-0.05em] sm:text-6xl">
+              Everything sellers need to run the business.
+            </h2>
+          </div>
+
+          <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {sellerFeatures.map((feature, index) => (
+              <FeatureCard key={feature.title} feature={feature} index={index} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="shop" className="bg-emerald-950 px-5 py-20 text-white lg:px-8 lg:py-28">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+            <div>
+              <SectionLabel dark>Shop on Shoplinker</SectionLabel>
+              <h2 className="mt-6 text-5xl font-black leading-none tracking-[-0.05em] sm:text-6xl">
+                A better way for customers to discover and buy.
+              </h2>
+              <p className="mt-6 text-lg leading-8 text-white/70">
+                Customers are not just visitors. They can create Shoplinker accounts, search stores, compare products, follow sellers, receive updates, and review confirmed purchases.
+              </p>
+              <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+                <Link to={customerShopPath} className="inline-flex items-center justify-center rounded-full bg-lime-300 px-7 py-4 font-black text-emerald-950 transition hover:-translate-y-1 hover:bg-lime-200">
+                  {isAuthenticated ? 'Browse Stores' : 'Create Customer Account'}
+                </Link>
+                <Link to={customerShopPath} className="inline-flex items-center justify-center rounded-full border border-white/30 px-7 py-4 font-black text-white transition hover:bg-white/10">
+                  Browse Stores
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              {buyerFeatures.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={feature.title} className="rounded-[2rem] border border-white/10 bg-white/[0.08] p-7 backdrop-blur transition duration-500 hover:-translate-y-2 hover:bg-white/[0.12]">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-lime-300 text-emerald-950">
+                      <Icon className="h-7 w-7" />
                     </div>
+                    <h3 className="mt-7 text-2xl font-black">{feature.title}</h3>
+                    <p className="mt-3 leading-7 text-white/70">{feature.description}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
 
-                    <div className="mt-6 overflow-hidden rounded-3xl border border-slate-100">
-                      <div className="h-36 bg-gradient-to-r from-blue-500 to-cyan-400" />
-                      <div className="p-5">
-                        <div className="flex items-center justify-between gap-4">
-                          <div>
-                            <p className="text-lg font-bold">Nusrat Fashion House</p>
-                            <p className="text-sm text-slate-500">Modern clothing and lifestyle products</p>
-                          </div>
-                          <div className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                            Live store
-                          </div>
-                        </div>
+      <section id="how-it-works" className="px-5 py-20 lg:px-8 lg:py-28">
+        <div className="mx-auto max-w-7xl">
+          <div className="max-w-4xl">
+            <SectionLabel>How It Works</SectionLabel>
+            <h2 className="mt-6 text-5xl font-black leading-none tracking-[-0.05em] sm:text-6xl">
+              Two simple flows: sell or shop.
+            </h2>
+          </div>
 
-                        <div className="mt-5 grid grid-cols-2 gap-4">
-                          {[1, 2, 3, 4].map((item) => (
-                            <div key={item} className="rounded-2xl bg-slate-50 p-3">
-                              <div className="h-20 rounded-xl bg-slate-200" />
-                              <p className="mt-3 text-sm font-semibold text-slate-900">Product Item</p>
-                              <p className="text-xs text-slate-500">Imported from Facebook</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+          <div className="mt-14 grid gap-6 lg:grid-cols-2">
+            <div className="rounded-[2.5rem] bg-white p-8 shadow-[0_20px_70px_rgba(8,28,21,0.10)]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-950 text-lime-300">
+                  <Store className="h-6 w-6" />
+                </div>
+                <h3 className="text-3xl font-black">For sellers</h3>
+              </div>
+              <div className="mt-8 space-y-4">
+                {sellerSteps.map(([title, description], index) => (
+                  <div key={title} className="flex gap-4 rounded-2xl bg-[#f6f1e7] p-5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-lime-300 text-sm font-black text-emerald-950">{index + 1}</div>
+                    <div>
+                      <p className="font-black">{title}</p>
+                      <p className="mt-1 leading-7 text-emerald-950/70">{description}</p>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <section className="border-y border-slate-100 bg-slate-50/70">
-        <div className="mx-auto grid max-w-7xl gap-6 px-6 py-8 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-4 lg:px-8">
-          <div className="rounded-xl bg-white p-4 shadow-md transition-all duration-200 hover:shadow-lg">Made for Facebook page sellers</div>
-          <div className="rounded-xl bg-white p-4 shadow-md transition-all duration-200 hover:shadow-lg">Supports manual and link-based product uploads</div>
-          <div className="rounded-xl bg-white p-4 shadow-md transition-all duration-200 hover:shadow-lg">Professional branding with logo and banner</div>
-          <div className="rounded-xl bg-white p-4 shadow-md transition-all duration-200 hover:shadow-lg">Ideal for Bangladesh and global social commerce</div>
-        </div>
-      </section>
-
-      <section id="features" className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-        <SectionHeading
-          eyebrow="Features"
-          title="Everything social-commerce sellers need"
-          description="Built for businesses that already sell through Facebook and want a better, more organized online presence."
-        />
-
-        <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <div
-                key={feature.title}
-                className="rounded-2xl border border-slate-100 bg-white p-6 shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                  <Icon className="h-6 w-6" />
+            <div className="rounded-[2.5rem] bg-lime-300 p-8 shadow-[0_20px_70px_rgba(8,28,21,0.10)]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-950 text-lime-300">
+                  <ShoppingBag className="h-6 w-6" />
                 </div>
-                <h3 className="mt-5 text-xl font-semibold">{feature.title}</h3>
-                <p className="mt-3 leading-7 text-slate-600">{feature.description}</p>
+                <h3 className="text-3xl font-black">For customers</h3>
               </div>
-            );
-          })}
-        </div>
-      </section>
-
-      <section id="how-it-works" className="bg-slate-50 py-20">
-        <div className="mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-2 lg:px-8">
-          <div>
-            <SectionHeading
-              eyebrow="How it works"
-              title="A simple workflow from Facebook page to online store"
-              description="Shoplinker fits how many small businesses already work, then upgrades that workflow into a real website experience."
-            />
-          </div>
-
-          <div className="space-y-4">
-            {steps.map((step, index) => (
-              <div
-                key={step}
-                className="flex items-start gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-md transition-all duration-200 hover:shadow-lg"
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 font-semibold text-white">
-                  {index + 1}
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-slate-900">{step}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="rounded-2xl bg-slate-900 p-8 text-white shadow-lg md:p-10">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-blue-300">
-              Why Shoplinker
-            </p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              Social selling works. Shoplinker makes it more professional.
-            </h2>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-              Many businesses already succeed on Facebook, but customers still expect a clean website experience. Shoplinker bridges that gap without forcing sellers to abandon the tools they already use.
-            </p>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {[
-                "Professional online presence",
-                "Branded identity with your own visuals",
-                "Easier product browsing for customers",
-                "Keeps Facebook workflow connected",
-              ].map((item) => (
-                <div key={item} className="flex items-start gap-3 rounded-2xl bg-white/5 p-4">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 text-blue-300" />
-                  <span className="text-slate-200">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-100 bg-white p-8 shadow-md md:p-10">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-blue-600">
-              Starter form
-            </p>
-            <h3 className="mt-3 text-2xl font-bold text-slate-900">
-              See how onboarding could begin
-            </h3>
-            <p className="mt-4 leading-7 text-slate-600">
-              Collect a few details and help sellers create their storefront quickly.
-            </p>
-
-            <div className="mt-8 space-y-3">
-              <input
-                type="text"
-                placeholder="Your shop name"
-                className="w-full rounded-lg border border-slate-200 px-4 py-3 outline-none transition-all duration-200 focus:border-blue-500 focus:shadow-md"
-              />
-              <input
-                type="text"
-                placeholder="Facebook page link"
-                className="w-full rounded-lg border border-slate-200 px-4 py-3 outline-none transition-all duration-200 focus:border-blue-500 focus:shadow-md"
-              />
-              <input
-                type="text"
-                placeholder="Business phone or WhatsApp"
-                className="w-full rounded-lg border border-slate-200 px-4 py-3 outline-none transition-all duration-200 focus:border-blue-500 focus:shadow-md"
-              />
-              <button className="w-full rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg">
-                Start building
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="pricing" className="bg-slate-50 py-20">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <SectionHeading
-            eyebrow="Pricing"
-            title="Simple pricing for different stages of growth"
-            description="You can replace these placeholders later with your final pricing model."
-          />
-
-          <div className="mt-12 grid gap-6 lg:grid-cols-3">
-            {pricing.map((plan) => (
-              <div
-                key={plan.name}
-                className={`rounded-2xl border p-8 shadow-md transition-all duration-200 ${
-                  plan.highlighted
-                    ? "border-blue-600 bg-white ring-4 ring-blue-100 hover:shadow-xl"
-                    : "border-slate-100 bg-white hover:shadow-lg"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <h3 className="text-2xl font-bold text-slate-900">{plan.name}</h3>
-                  {plan.highlighted && (
-                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                      Popular
-                    </span>
-                  )}
-                </div>
-                <p className="mt-4 text-3xl font-bold text-slate-900">{plan.price}</p>
-                <p className="mt-3 leading-7 text-slate-600">{plan.description}</p>
-                <div className="mt-6 space-y-3">
-                  {plan.features.map((item) => (
-                    <div key={item} className="flex items-start gap-3">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 text-blue-600" />
-                      <span className="text-slate-600">{item}</span>
+              <div className="mt-8 space-y-4">
+                {buyerSteps.map(([title, description], index) => (
+                  <div key={title} className="flex gap-4 rounded-2xl bg-white/70 p-5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-950 text-sm font-black text-lime-200">{index + 1}</div>
+                    <div>
+                      <p className="font-black">{title}</p>
+                      <p className="mt-1 leading-7 text-emerald-950/70">{description}</p>
                     </div>
-                  ))}
-                </div>
-                <button
-                  className={`mt-8 w-full rounded-lg px-5 py-3 font-semibold shadow-sm transition-all duration-200 ${
-                    plan.highlighted
-                      ? "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg"
-                      : "border border-slate-200 text-slate-900 hover:border-blue-400 hover:text-blue-600 hover:shadow-md"
-                  }`}
-                >
-                  {plan.cta}
-                </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-5 pb-20 lg:px-8 lg:pb-28">
+        <div className="mx-auto max-w-7xl rounded-[2.5rem] bg-lime-300 p-8 text-emerald-950 md:p-12 lg:p-16">
+          <div className="grid gap-8 md:grid-cols-4">
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                <p className="text-6xl font-black tracking-[-0.06em] lg:text-7xl">{stat.value}</p>
+                <p className="mt-3 max-w-48 text-base font-bold leading-6 text-emerald-950/70">{stat.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-        <SectionHeading
-          eyebrow="Testimonials"
-          title="What sellers might love about Shoplinker"
-          description="Sample testimonial content for your landing page design."
-        />
-
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {testimonials.map((item) => (
-            <div key={item.name} className="rounded-2xl border border-slate-100 bg-white p-8 shadow-md transition-all duration-200 hover:shadow-lg">
-              <p className="text-lg leading-8 text-slate-600">"{item.quote}"</p>
-              <div className="mt-6">
-                <p className="font-semibold text-slate-900">{item.name}</p>
-                <p className="text-sm text-slate-500">Early seller perspective</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="faq" className="bg-slate-50 py-20">
-        <div className="mx-auto max-w-5xl px-6 lg:px-8">
-          <SectionHeading
-            eyebrow="FAQ"
-            title="Common questions"
-            description="Helpful answers for sellers who are thinking about moving beyond Facebook-only selling."
-          />
+      <section id="faq" className="bg-[#efe5d2] px-5 py-20 lg:px-8 lg:py-28">
+        <div className="mx-auto max-w-5xl">
+          <div className="text-center">
+            <SectionLabel>FAQ</SectionLabel>
+            <h2 className="mt-6 text-5xl font-black leading-none tracking-[-0.05em] sm:text-6xl">
+              Questions sellers and customers ask.
+            </h2>
+          </div>
 
           <div className="mt-12 space-y-4">
             {faqs.map((item) => (
-              <div key={item.question} className="rounded-2xl border border-slate-100 bg-white p-6 shadow-md transition-all duration-200 hover:shadow-lg">
-                <h3 className="text-lg font-semibold text-slate-900">{item.question}</h3>
-                <p className="mt-3 leading-7 text-slate-600">{item.answer}</p>
+              <div key={item.question} className="rounded-[2rem] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+                <h3 className="text-xl font-black">{item.question}</h3>
+                <p className="mt-3 leading-7 text-emerald-950/70">{item.answer}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-        <div className="rounded-2xl bg-blue-600 px-8 py-12 text-white shadow-2xl md:px-12 md:py-16">
-          <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-blue-100">
-                Start now
-              </p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                Build a modern storefront for your Facebook business.
-              </h2>
-              <p className="mt-4 max-w-2xl text-lg leading-8 text-blue-50">
-                Create a stronger online identity, organize your products better, and help customers shop more easily with Shoplinker.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-4 sm:flex-row lg:justify-end">
-              <Link to="/register" className="rounded-lg bg-white px-6 py-3 font-semibold text-blue-700 transition-all duration-200 hover:bg-blue-50 hover:shadow-md text-center">
-                Get started free
+      <section className="px-5 py-20 lg:px-8 lg:py-28">
+        <div className="mx-auto max-w-7xl overflow-hidden rounded-[3rem] bg-emerald-950 p-8 text-white shadow-[0_30px_90px_rgba(8,28,21,0.28)] md:p-14 lg:p-20">
+          <div className="max-w-4xl">
+            <h2 className="text-5xl font-black leading-none tracking-[-0.06em] sm:text-7xl">
+              Ready to sell or shop smarter?
+            </h2>
+            <p className="mt-6 max-w-2xl text-xl leading-8 text-white/70">
+              Create a store as a seller, or create a customer account to discover stores, compare products, follow sellers, and shop with confidence.
+            </p>
+            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+              {renderCreateStoreAction(
+                'inline-flex items-center justify-center gap-2 rounded-full bg-lime-300 px-8 py-4 font-black text-emerald-950 transition hover:-translate-y-1 hover:bg-lime-200',
+                <>Create Store <ArrowRight className="h-5 w-5" /></>
+              )}
+              <Link to={customerShopPath} className="inline-flex items-center justify-center rounded-full border border-white/30 px-8 py-4 font-black text-white transition hover:bg-white/10">
+                Shop on Shoplinker
               </Link>
-              <button className="rounded-lg border border-white/30 px-6 py-3 font-semibold text-white transition-all duration-200 hover:bg-white/10 hover:border-white">
-                Book a demo
-              </button>
             </div>
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-slate-100 bg-white">
-        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 text-sm text-slate-600 md:grid-cols-4 lg:px-8">
+      <footer className="border-t border-emerald-950/10 bg-[#f6f1e7] px-5 py-14 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.2fr_2fr]">
           <div>
-            <div className="relative h-12 w-40">
-              <img
-                src="/shoplinker.svg"
-                alt="Shoplinker logo"
-                className="h-full w-full object-contain object-left"
-              />
-            </div>
-            <p className="mt-4 leading-7">
-              Helping Facebook-based businesses create real ecommerce storefronts.
+            <img src="/shoplinker.svg" alt="Shoplinker" className="h-10 w-auto" />
+            <p className="mt-5 max-w-sm text-lg leading-8 text-emerald-950/70">
+              A modern commerce platform for sellers, customers, local brands, and growing online stores.
             </p>
           </div>
 
-          <div>
-            <p className="font-semibold text-slate-900">Product</p>
-            <div className="mt-4 space-y-3">
-              <a href="#features" className="block hover:text-blue-600">
-                Features
-              </a>
-              <a href="#pricing" className="block hover:text-blue-600">
-                Pricing
-              </a>
-              <a href="#faq" className="block hover:text-blue-600">
-                FAQ
-              </a>
-            </div>
+          <div className="grid gap-8 sm:grid-cols-3">
+            {footerGroups.map((group) => (
+              <div key={group.title}>
+                <h3 className="font-black">{group.title}</h3>
+                <div className="mt-4 space-y-3">
+                  {group.links.map((link) => (
+                    <a key={link.label} href={link.href} className="block font-semibold text-emerald-950/60 transition hover:text-emerald-950">
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-
-          <div>
-            <p className="font-semibold text-slate-900">Company</p>
-            <div className="mt-4 space-y-3">
-              <a href="#" className="block hover:text-blue-600">
-                About
-              </a>
-              <a href="#" className="block hover:text-blue-600">
-                Contact
-              </a>
-              <a href="#" className="block hover:text-blue-600">
-                Support
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <p className="font-semibold text-slate-900">Legal</p>
-            <div className="mt-4 space-y-3">
-              <a href="#" className="block hover:text-blue-600">
-                Privacy Policy
-              </a>
-              <a href="#" className="block hover:text-blue-600">
-                Terms of Service
-              </a>
-            </div>
-          </div>
+        </div>
+        <div className="mx-auto mt-12 flex max-w-7xl flex-col justify-between gap-4 border-t border-emerald-950/10 pt-6 text-sm font-semibold text-emerald-950/60 sm:flex-row">
+          <p>© {new Date().getFullYear()} Shoplinker. All rights reserved.</p>
+          <p>Built for modern small-business commerce.</p>
         </div>
       </footer>
     </main>

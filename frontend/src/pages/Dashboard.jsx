@@ -16,6 +16,7 @@ import {
   ExternalLink,
   BarChart3,
   ArrowUpRight,
+  Search,
 } from "lucide-react";
 import { storesAPI, productsAPI, ordersAPI } from "../api/api";
 
@@ -25,6 +26,9 @@ const Dashboard = () => {
   const [stores, setStores] = useState([]);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [storeSearchQuery, setStoreSearchQuery] = useState("");
+  const [allStores, setAllStores] = useState([]);
+  const [filteredStores, setFilteredStores] = useState([]);
   const [stats, setStats] = useState({
     totalProducts: 0,
     publishedProducts: 0,
@@ -39,9 +43,30 @@ const Dashboard = () => {
     if (isVendor()) {
       fetchVendorData();
     } else {
+      fetchAllStores();
       setLoading(false);
     }
   }, []);
+
+  const fetchAllStores = async () => {
+    try {
+      const response = await storesAPI.getAll();
+      const storesData = response.data || response;
+      setAllStores(storesData);
+      setFilteredStores(storesData);
+    } catch (error) {
+      console.error("Failed to fetch stores:", error);
+    }
+  };
+
+  const handleStoreSearch = (e) => {
+    const query = e.target.value.toLowerCase();
+    setStoreSearchQuery(query);
+    const filtered = allStores.filter((store) =>
+      store.name.toLowerCase().includes(query),
+    );
+    setFilteredStores(filtered);
+  };
 
   const fetchVendorData = async () => {
     try {
@@ -675,6 +700,62 @@ const Dashboard = () => {
             Explore products and stores from all vendors
           </p>
         </div>
+
+        {/* Search Bar */}
+        <div className="mb-8">
+          <div className="relative max-w-xl">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search stores by name..."
+              value={storeSearchQuery}
+              onChange={handleStoreSearch}
+              className="block w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+            />
+          </div>
+        </div>
+
+        {/* Store Results */}
+        {storeSearchQuery && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-slate-900 mb-4">
+              {filteredStores.length} store
+              {filteredStores.length !== 1 ? "s" : ""} found
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredStores.map((store) => (
+                <Link
+                  key={store.id}
+                  to={`/store/${store.slug}`}
+                  className="group rounded-2xl border border-slate-200 bg-white p-6 hover:border-slate-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                      <Building2 className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-slate-900 truncate">
+                        {store.name}
+                      </h3>
+                      {store.description && (
+                        <p className="text-sm text-slate-600 truncate">
+                          {store.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            {filteredStores.length === 0 && (
+              <p className="text-slate-600 text-center py-8">
+                No stores found matching "{storeSearchQuery}"
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2 max-w-4xl">
           <Link

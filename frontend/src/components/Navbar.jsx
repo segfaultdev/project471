@@ -36,6 +36,9 @@ const Navbar = () => {
                     <Link to="/my-products" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200">
                       My Products
                     </Link>
+                    <Link to="/coupons" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200">
+                      Coupons
+                    </Link>
                   </>
                 )}
                 <div className="flex items-center gap-4 ml-4 pl-4 border-l border-slate-200">

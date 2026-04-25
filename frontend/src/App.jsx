@@ -14,6 +14,7 @@ import StoreDetail from './pages/StoreDetail';
 import Sell from './pages/Sell';
 import ImportProduct from './pages/ImportProduct';
 import BulkImport from './pages/BulkImport';
+import Coupons from './pages/Coupons';
 
 function App() {
   return (
@@ -86,6 +87,17 @@ function App() {
             }
           />
           <Route
+            path="/coupons"
+            element={
+              <ProtectedRoute requireVendor={true}>
+                <div>
+                  <Navbar />
+                  <Coupons />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/import-product"
             element={
               <ProtectedRoute requireVendor={true}>
@@ -114,4 +126,3 @@ function App() {
 }
 
 export default App;
-

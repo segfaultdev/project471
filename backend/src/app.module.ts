@@ -20,7 +20,7 @@ import { StoresModule } from './stores/stores.module';
 import { ProductsModule } from './products/products.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
-
+import { CouponsModule } from './coupons/coupons.module';
 @Module({
   imports: [
     // ConfigModule - Loads environment variables from .env file
@@ -49,6 +49,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     AuthModule,      // Authentication (login, register, JWT)
     StoresModule,    // Store/Vendor management (CRUD operations)
     ProductsModule,  // Product catalog (CRUD operations)
+    CouponsModule,
   ],
   
   controllers: [AppController],  // Root controller

@@ -80,5 +80,12 @@ export const productsAPI = {
   update: (id, productData) => api.patch(`/products/${id}`, productData),
   delete: (id) => api.delete(`/products/${id}`),
 };
-
+// Coupons API
+export const couponsAPI = {
+  getAll: () => api.get('/coupons'),
+  getByStore: (storeId) => api.get(`/coupons/store/${storeId}`),
+  create: (data) => api.post('/coupons', data),
+  update: (id, data) => api.patch(`/coupons/${id}`, data),
+  delete: (id) => api.delete(`/coupons/${id}`),
+};
 export default api;

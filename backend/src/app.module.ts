@@ -20,7 +20,7 @@ import { StoresModule } from './stores/stores.module';
 import { ProductsModule } from './products/products.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
-
+import { OrdersModule } from './orders/orders.module';
 @Module({
   imports: [
     // ConfigModule - Loads environment variables from .env file
@@ -41,7 +41,8 @@ import { RolesGuard } from './auth/guards/roles.guard';
       synchronize: process.env.NODE_ENV !== 'production',     // Auto-sync schema in dev
       ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false, // SSL for Azure
       logging: process.env.NODE_ENV !== 'production',         // Log queries in dev
-      uuidExtension: 'pgcrypto',                             // Use gen_random_uuid()
+      uuidExtension: 'pgcrypto',  
+                                 // Use gen_random_uuid()
     }),
     
     // Feature Modules
@@ -49,6 +50,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     AuthModule,      // Authentication (login, register, JWT)
     StoresModule,    // Store/Vendor management (CRUD operations)
     ProductsModule,  // Product catalog (CRUD operations)
+    OrdersModule,
   ],
   
   controllers: [AppController],  // Root controller

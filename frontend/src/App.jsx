@@ -14,6 +14,7 @@ import StoreDetail from './pages/StoreDetail';
 import Sell from './pages/Sell';
 import ImportProduct from './pages/ImportProduct';
 import BulkImport from './pages/BulkImport';
+import Orders from './pages/Orders';
 
 function App() {
   return (
@@ -107,6 +108,19 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* ✅ NEW: Orders Route */}
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute requireVendor={true}>
+                <div>
+                  <Navbar />
+                  <Orders />
+                </div>
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Router>
     </AuthProvider>
@@ -114,4 +128,3 @@ function App() {
 }
 
 export default App;
-

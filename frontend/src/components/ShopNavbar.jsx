@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ShoppingCart, Heart, User } from "lucide-react";
 
 const ShopNavbar = () => {
+  const location = useLocation();
+
   // Get cart count from localStorage
   const getCartCount = () => {
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -41,7 +43,7 @@ const ShopNavbar = () => {
 
             {/* Wishlist Button */}
             <Link
-              to="/wishlist"
+              to="/shop-wishlist"
               className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               <Heart className="h-4 w-4" />
@@ -50,7 +52,8 @@ const ShopNavbar = () => {
 
             {/* Sign In Button */}
             <Link
-              to="/login"
+              to="/shop-login"
+              state={{ from: location.pathname }}
               className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               <User className="h-4 w-4" />

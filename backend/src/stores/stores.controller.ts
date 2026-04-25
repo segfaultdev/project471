@@ -82,6 +82,7 @@ export class StoresController {
    * GET /stores/owner/:ownerId - Get stores by owner
    * Example: GET http://localhost:3000/stores/owner/user-uuid
    */
+  @Public()
   @Get('owner/:ownerId')
   findByOwner(@Param('ownerId') ownerId: string) {
     return this.storesService.findByOwner(ownerId);
@@ -92,6 +93,7 @@ export class StoresController {
    * Example: GET http://localhost:3000/stores/slug/my-store-name
    * IMPORTANT: This must come BEFORE :id route
    */
+  @Public()
   @Get('slug/:slug')
   async findBySlug(@Param('slug') slug: string) {
     const store = await this.storesService.findBySlug(slug);
@@ -105,6 +107,7 @@ export class StoresController {
    * GET /stores/:id - Get single store by ID
    * Example: GET http://localhost:3000/stores/uuid-here
    */
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.storesService.findOne(id);

@@ -77,18 +77,18 @@ const sellerFeatures = [
 const buyerFeatures = [
   {
     icon: Search,
-    title: 'Search stores and products',
-    description: 'Customers can search by store name or product type, then discover sellers who match what they need.',
+    title: 'Search stores',
+    description: 'Customers can search by store name or category, then visit storefronts to browse products from each seller.',
   },
   {
     icon: ShoppingBag,
-    title: 'Shop from trusted stores',
-    description: 'Browse storefronts, product details, prices, stock updates, and available payment options in one place.',
+    title: 'Visit trusted storefronts',
+    description: 'Open a seller profile, view that store’s products, prices, stock updates, and available payment options.',
   },
   {
     icon: Star,
-    title: 'Compare before buying',
-    description: 'Compare similar products from multiple sellers using price, rating, and delivery estimate.',
+    title: 'Compare stores before buying',
+    description: 'Compare seller profiles using store rating, product pricing shown inside stores, and delivery estimate.',
   },
   {
     icon: Heart,
@@ -116,7 +116,7 @@ const sellerSteps = [
 
 const buyerSteps = [
   ['Create account', 'Sign up as a customer to save carts, follow stores, and receive updates.'],
-  ['Find products', 'Search by store name or product type and compare options from multiple sellers.'],
+  ['Find stores', 'Search by store name or category, then visit stores to browse their products.'],
   ['Place order', 'Choose your item, select payment method, and track the shopping flow.'],
   ['Review purchase', 'After confirmed delivery, leave ratings and reviews to help other buyers.'],
 ];
@@ -173,8 +173,8 @@ const footerGroups = [
   {
     title: 'For customers',
     links: [
-      { label: 'Search products', href: '#shop' },
-      { label: 'Compare sellers', href: '#shop' },
+      { label: 'Search storess', href: '#shop' },
+      { label: 'Visit storefronts', href: '#shop' },
       { label: 'Follow stores', href: '#shop' },
       { label: 'Reviews', href: '#shop' },
     ],
@@ -245,7 +245,7 @@ function DashboardMockup() {
                 <Search className="h-5 w-5 text-emerald-700" />
               </div>
               <div className="mt-5 space-y-3">
-                {['Search product', 'Compare sellers', 'Place order', 'Review purchase'].map((status, index) => (
+                {['Search stores', 'Visit storefronts', 'Place order', 'Review purchase'].map((status, index) => (
                   <div key={status} className="flex items-center gap-3 rounded-2xl bg-emerald-50 p-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-950 text-xs font-black text-lime-200">{index + 1}</div>
                     <span className="font-bold">{status}</span>
@@ -429,10 +429,10 @@ export default function Homepage() {
             <div>
               <SectionLabel>Commerce for sellers and customers</SectionLabel>
               <h1 className="mt-8 max-w-5xl text-[3.8rem] font-black leading-[0.9] tracking-[-0.07em] text-emerald-950 sm:text-[5.6rem] lg:text-[6.4rem]">
-                Create stores. Discover products. Shop smarter.
+                Create stores. Discover stores. Shop smarter.
               </h1>
               <p className="mt-8 max-w-2xl text-xl leading-8 text-emerald-950/70">
-                Shoplinker helps sellers run online stores and helps customers find trusted stores, compare products, follow sellers, and shop with confidence.
+                Shoplinker helps sellers run online stores and helps customers find trusted stores, compare sellers, follow shops, and shop with confidence.
               </p>
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 {renderCreateStoreAction(
@@ -491,7 +491,7 @@ export default function Homepage() {
                 A better way for customers to discover and buy.
               </h2>
               <p className="mt-6 text-lg leading-8 text-white/70">
-                Customers are not just visitors. They can create Shoplinker accounts, search stores, compare products, follow sellers, receive updates, and review confirmed purchases.
+                Customers are not just visitors. They can create Shoplinker accounts, search stores, follow sellers, receive updates, save products from store pages, and review confirmed purchases.
               </p>
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                 <Link to={customerShopPath} className="inline-flex items-center justify-center rounded-full bg-lime-300 px-7 py-4 font-black text-emerald-950 transition hover:-translate-y-1 hover:bg-lime-200">
@@ -614,7 +614,7 @@ export default function Homepage() {
               Ready to sell or shop smarter?
             </h2>
             <p className="mt-6 max-w-2xl text-xl leading-8 text-white/70">
-              Create a store as a seller, or create a customer account to discover stores, compare products, follow sellers, and shop with confidence.
+              Create a store as a seller, or create a customer account to discover stores, follow sellers, save products, and shop with confidence.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               {renderCreateStoreAction(

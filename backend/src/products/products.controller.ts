@@ -22,6 +22,7 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { UserRole } from '../users/entities/user.entity';
 import { StoresService } from '../stores/stores.service';
 
@@ -57,6 +58,7 @@ export class ProductsController {
    * GET /products - Get all products
    * Example: GET http://localhost:3000/products
    */
+  @Public()
   @Get()
   findAll() {
     return this.productsService.findAll();
@@ -88,6 +90,7 @@ export class ProductsController {
    * GET /products/store/:storeId - Get products by store
    * Example: GET http://localhost:3000/products/store/store-uuid
    */
+  @Public()
   @Get('store/:storeId')
   findByStore(@Param('storeId') storeId: string) {
     return this.productsService.findByStore(storeId);
@@ -97,6 +100,7 @@ export class ProductsController {
    * GET /products/category/:category - Get products by category
    * Example: GET http://localhost:3000/products/category/Electronics
    */
+  @Public()
   @Get('category/:category')
   findByCategory(@Param('category') category: string) {
     return this.productsService.findByCategory(category);
@@ -106,6 +110,7 @@ export class ProductsController {
    * GET /products/:id - Get single product by ID
    * Example: GET http://localhost:3000/products/uuid-here
    */
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);

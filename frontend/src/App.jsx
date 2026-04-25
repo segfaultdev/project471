@@ -14,6 +14,7 @@ import StoreDetail from './pages/StoreDetail';
 import Sell from './pages/Sell';
 import ImportProduct from './pages/ImportProduct';
 import BulkImport from './pages/BulkImport';
+import Notifications from './pages/Notifications';
 
 function App() {
   return (
@@ -35,6 +36,17 @@ function App() {
                 <div>
                   <Navbar />
                   <Dashboard />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <Navbar />
+                  <Notifications />
                 </div>
               </ProtectedRoute>
             }
@@ -114,4 +126,3 @@ function App() {
 }
 
 export default App;
-

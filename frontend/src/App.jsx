@@ -1,30 +1,20 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-import Navbar from "./components/Navbar";
-import ProtectedRoute from "./components/ProtectedRoute";
-import Homepage from "./pages/Homepage";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import MyStores from "./pages/MyStores";
-import MyProducts from "./pages/MyProducts";
-import Products from "./pages/Products";
-import Stores from "./pages/Stores";
-import StoreDetail from "./pages/StoreDetail";
-import ProductDetail from "./pages/ProductDetail";
-import Cart from "./pages/Cart";
-import Wishlist from "./pages/Wishlist";
-import Checkout from "./pages/Checkout";
-import CheckoutSuccess from "./pages/CheckoutSuccess";
-import Sell from "./pages/Sell";
-import ImportProduct from "./pages/ImportProduct";
-import BulkImport from "./pages/BulkImport";
-import MyOrders from "./pages/MyOrders";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
+import Homepage from './pages/Homepage';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import MyStores from './pages/MyStores';
+import MyProducts from './pages/MyProducts';
+import Products from './pages/Products';
+import Stores from './pages/Stores';
+import StoreDetail from './pages/StoreDetail';
+import Sell from './pages/Sell';
+import ImportProduct from './pages/ImportProduct';
+import BulkImport from './pages/BulkImport';
+import Notifications from './pages/Notifications';
 
 function App() {
   return (
@@ -51,6 +41,17 @@ function App() {
                 <div>
                   <Navbar />
                   <Dashboard />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <Navbar />
+                  <Notifications />
                 </div>
               </ProtectedRoute>
             }
@@ -140,4 +141,8 @@ function App() {
   );
 }
 
+<<<<<<< HEAD
 export default App;
+=======
+export default App;
+>>>>>>> origin/add-buyer-notifications

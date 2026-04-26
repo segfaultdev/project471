@@ -98,6 +98,15 @@ const Navbar = () => {
                 >
                   Dashboard
                 </Link>
+                <Link to="/products" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200">
+                  Products
+                </Link>
+
+                {/* ✅ ADDED THIS LINE */}
+                <Link to="/notifications" className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors duration-200">
+                  Notifications
+                </Link>
+
                 {isVendor() && (
                   <>
                     <Link

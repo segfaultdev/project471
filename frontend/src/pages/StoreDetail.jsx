@@ -81,9 +81,6 @@ const StoreDetail = () => {
 
   return (
     <main className="min-h-screen bg-slate-50">
-<<<<<<< HEAD
-      <ShopNavbar />
-=======
       {/* Header */}
       <header className="border-b border-slate-100 bg-white">
         <div className="mx-auto max-w-7xl px-6 py-4 lg:px-8">
@@ -98,7 +95,6 @@ const StoreDetail = () => {
           </div>
         </div>
       </header>
->>>>>>> 159643a2ff8505491287c28cf7ef3d03ec310fc0
 
       {/* Banner Section */}
       <section className="w-full">
@@ -230,35 +226,6 @@ const StoreDetail = () => {
                   key={product.id}
                   className="overflow-hidden rounded-3xl bg-white border border-slate-200 transition hover:border-slate-300"
                 >
-<<<<<<< HEAD
-                  {/* Product Image - Clickable */}
-                  <Link to={`/product/${product.id}`}>
-                    <div className="h-56 w-full bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden flex items-center justify-center cursor-pointer">
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                            e.target.parentElement.innerHTML =
-                              '<svg class="h-16 w-16 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>';
-                          }}
-                        />
-                      ) : (
-                        <Package className="h-16 w-16 text-slate-400" />
-                      )}
-                    </div>
-                  </Link>
-
-                  <div className="p-6">
-                    {/* Product Title - Clickable */}
-                    <Link to={`/product/${product.id}`}>
-                      <h3 className="text-xl font-semibold text-slate-900 line-clamp-2 cursor-pointer hover:text-blue-600 transition">
-                        {product.name}
-                      </h3>
-                    </Link>
-=======
                   {/* Product Image */}
                   <div className="h-56 w-full bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden flex items-center justify-center">
                     {product.images && product.images.length > 0 ? (
@@ -281,7 +248,6 @@ const StoreDetail = () => {
                     <h3 className="text-xl font-semibold text-slate-900 line-clamp-2">
                       {product.name}
                     </h3>
->>>>>>> 159643a2ff8505491287c28cf7ef3d03ec310fc0
 
                     {product.description && (
                       <p className="mt-2 text-sm text-slate-600 line-clamp-2">

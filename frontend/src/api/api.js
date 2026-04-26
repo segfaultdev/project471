@@ -80,14 +80,11 @@ export const productsAPI = {
   update: (id, productData) => api.patch(`/products/${id}`, productData),
   delete: (id) => api.delete(`/products/${id}`),
 };
-
-// Orders API calls
-export const ordersAPI = {
-  create: (orderData) => api.post("/orders", orderData),
-  getAll: () => api.get("/orders"),
-  getByStore: (storeId) => api.get(`/orders/store/${storeId}`),
-  getOne: (id) => api.get(`/orders/${id}`),
-  updateStatus: (id, status) => api.patch(`/orders/${id}/status`, { status }),
+// Notifications API
+export const notificationsAPI = {
+  getAll: () => api.get('/notifications'),
+  getByBuyer: (buyerId) => api.get(`/notifications/buyer/${buyerId}`),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  delete: (id) => api.delete(`/notifications/${id}`),
 };
-
 export default api;

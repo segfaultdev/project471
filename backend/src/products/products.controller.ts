@@ -105,6 +105,7 @@ export class ProductsController {
 
   /**
    * GET /products/compare/:productId - Get similar products for comparison
+   * Returns products in the same category with similar names from different sellers
    * Example: GET http://localhost:3000/products/compare/uuid-here
    */
   @Get('compare/:productId')
@@ -113,7 +114,7 @@ export class ProductsController {
     if (!product) {
       throw new NotFoundException('Product not found');
     }
-    return this.productsService.findSimilarProducts(product.name, productId);
+    return this.productsService.findSimilarProducts(product.name, product.categoryId, productId);
   }
 
   /**

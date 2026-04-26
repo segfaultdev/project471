@@ -1,19 +1,23 @@
 import { useState, useEffect } from 'react';
-import { productsAPI, storesAPI } from '../api/api';
+import { productsAPI, storesAPI, categoriesAPI } from '../api/api';
 import { Link } from 'react-router-dom';
 
 const MyProducts = () => {
   const [products, setProducts] = useState([]);
   const [stores, setStores] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     stock: '',
-    category: '',
+    categoryId: '',
+    customCategory: '',
     storeId: '',
     weight: '',
     image: '',
@@ -27,12 +31,14 @@ const MyProducts = () => {
 
   const fetchData = async () => {
     try {
-      const [productsRes, storesRes] = await Promise.all([
+      const [productsRes, storesRes, categoriesRes] = await Promise.all([
         productsAPI.getMyProducts(),
         storesAPI.getMyStores(),
+        categoriesAPI.getAll(),
       ]);
       setProducts(productsRes.data);
       setStores(storesRes.data);
+      setCategories(categoriesRes.data || []);
     } catch (err) {
       setError('Failed to load data');
       console.error(err);
@@ -41,11 +47,26 @@ const MyProducts = () => {
     }
   };
 
+  const fetchCategoriesForStore = async (storeId) => {
+    try {
+      const response = await categoriesAPI.getByStore(storeId);
+      setCategories(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch store categories:', err);
+    }
+  };
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    // If store changed, fetch categories for that store
+    if (name === 'storeId') {
+      fetchCategoriesForStore(value);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -80,19 +101,35 @@ const MyProducts = () => {
     e.preventDefault();
     setError('');
 
-    // Convert string numbers to numbers and image to images array
-    const productData = {
-      ...formData,
-      price: parseFloat(formData.price),
-      stock: parseInt(formData.stock) || 0,
-      weight: formData.weight ? parseFloat(formData.weight) : undefined,
-      images: formData.image ? [formData.image] : [],
-    };
-    
-    // Remove the single image field as backend expects images array
-    delete productData.image;
-
     try {
+      let categoryId = formData.categoryId;
+
+      // If custom category is provided, create it first
+      if (formData.customCategory.trim() && !categoryId) {
+        try {
+          const newCategoryRes = await categoriesAPI.create({
+            name: formData.customCategory,
+            storeId: formData.storeId,
+          });
+          categoryId = newCategoryRes.data.id;
+        } catch (err) {
+          setError('Failed to create category');
+          return;
+        }
+      }
+
+      // Convert string numbers to numbers and image to images array
+      const productData = {
+        name: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock) || 0,
+        categoryId: categoryId || undefined,
+        storeId: formData.storeId,
+        weight: formData.weight ? parseFloat(formData.weight) : undefined,
+        images: formData.image ? [formData.image] : [],
+      };
+
       if (editingProduct) {
         await productsAPI.update(editingProduct.id, productData);
       } else {
@@ -106,12 +143,15 @@ const MyProducts = () => {
         description: '',
         price: '',
         stock: '',
-        category: '',
+        categoryId: '',
+        customCategory: '',
         storeId: '',
         weight: '',
         image: '',
       });
       setImagePreview(null);
+      setShowNewCategoryInput(false);
+      setNewCategoryName('');
       fetchData();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save product');
@@ -125,13 +165,18 @@ const MyProducts = () => {
       description: product.description || '',
       price: product.price.toString(),
       stock: product.stock.toString(),
-      category: product.category || '',
+      categoryId: product.categoryId || '',
+      customCategory: '',
       storeId: product.storeId,
       weight: product.weight?.toString() || '',
       image: product.images?.[0] || '',
     });
     setImagePreview(product.images?.[0] || null);
     setShowForm(true);
+    // Fetch categories for this product's store
+    if (product.storeId) {
+      fetchCategoriesForStore(product.storeId);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -153,13 +198,16 @@ const MyProducts = () => {
       description: '',
       price: '',
       stock: '',
-      category: '',
+      categoryId: '',
+      customCategory: '',
       storeId: '',
       weight: '',
       image: '',
     });
     setImagePreview(null);
     setError('');
+    setShowNewCategoryInput(false);
+    setNewCategoryName('');
   };
 
   if (loading) {
@@ -330,18 +378,71 @@ const MyProducts = () => {
 
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
-                  <label htmlFor="category" className="block text-sm font-semibold text-slate-900 mb-2">
+                  <label htmlFor="categoryId" className="block text-sm font-semibold text-slate-900 mb-2">
                     Category
                   </label>
-                  <input
-                    type="text"
-                    id="category"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                    placeholder="e.g., Electronics"
-                  />
+                  
+                  {!showNewCategoryInput ? (
+                    <div className="space-y-2">
+                      <select
+                        id="categoryId"
+                        name="categoryId"
+                        value={formData.categoryId}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            categoryId: e.target.value,
+                            customCategory: '',
+                          });
+                        }}
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 bg-white"
+                      >
+                        <option value="">Select a category...</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                      
+                      <button
+                        type="button"
+                        onClick={() => setShowNewCategoryInput(true)}
+                        className="w-full px-3 py-2 text-xs font-semibold text-blue-600 hover:text-blue-700 rounded hover:bg-blue-50 transition"
+                      >
+                        + Create New Category
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={formData.customCategory}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          customCategory: e.target.value,
+                          categoryId: '',
+                        })}
+                        placeholder="Enter new category name..."
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      />
+                      
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewCategoryInput(false);
+                          setFormData({
+                            ...formData,
+                            customCategory: '',
+                            categoryId: '',
+                          });
+                        }}
+                        className="w-full px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-700 rounded hover:bg-slate-100 transition"
+                      >
+                        Back to Existing Categories
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -504,7 +605,7 @@ const MyProducts = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Category:</span>
                     <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
-                      {product.category || 'Uncategorized'}
+                      {product.category?.name || 'Uncategorized'}
                     </span>
                   </div>
                   {product.weight && (

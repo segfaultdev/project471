@@ -359,7 +359,7 @@ const Dashboard = () => {
                           </span>
                         </td>
                         <td className="py-4 text-slate-600">
-                          {product.category || 'Uncategorized'}
+                          {product.category?.name || 'Uncategorized'}
                         </td>
                         <td className="py-4">
                           <Link
@@ -385,9 +385,18 @@ const Dashboard = () => {
   }
 
   // Customer Dashboard
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+        {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl mb-4">
             Welcome back, {user?.firstName}! 👋
@@ -397,10 +406,11 @@ const Dashboard = () => {
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2 max-w-4xl">
+        {/* Quick Navigation */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2 max-w-4xl mb-12">
           <Link
             to="/products"
-            className="group rounded-3xl border border-slate-200 bg-white p-8 hover:border-slate-300 transition-colors"
+            className="group rounded-3xl border border-slate-200 bg-white p-8 hover:border-slate-300 transition-colors shadow-sm hover:shadow-md"
           >
             <div className="flex items-start justify-between mb-6">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
@@ -420,13 +430,13 @@ const Dashboard = () => {
 
           <Link
             to="/stores"
-            className="group rounded-3xl border border-slate-200 bg-white p-8 hover:border-slate-300 transition-colors"
+            className="group rounded-3xl border border-slate-200 bg-white p-8 hover:border-slate-300 transition-colors shadow-sm hover:shadow-md"
           >
             <div className="flex items-start justify-between mb-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-50 text-green-600">
                 <Building2 className="h-6 w-6" />
               </div>
-              <div className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">
+              <div className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-600">
                 Discover
               </div>
             </div>
@@ -437,6 +447,60 @@ const Dashboard = () => {
               Discover stores and vendors in our marketplace
             </p>
           </Link>
+        </div>
+
+        {/* Featured Section */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">Featured Products</h2>
+              <p className="text-sm text-slate-600 mt-1">Explore our latest and most popular products</p>
+            </div>
+            <Link to="/products" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+              View all →
+            </Link>
+          </div>
+          
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div className="text-center py-12">
+              <Package className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-600 mb-4">Browse our collection of products from various sellers</p>
+              <Link
+                to="/products"
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 transition"
+              >
+                <ShoppingBag className="h-5 w-5" />
+                Explore Products
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Stores Section */}
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">Discover Stores</h2>
+              <p className="text-sm text-slate-600 mt-1">Check out stores from different vendors</p>
+            </div>
+            <Link to="/stores" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+              View all →
+            </Link>
+          </div>
+          
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div className="text-center py-12">
+              <Building2 className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-600 mb-4">Discover amazing stores and their unique products</p>
+              <Link
+                to="/stores"
+                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700 transition"
+              >
+                <Building2 className="h-5 w-5" />
+                Explore Stores
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>

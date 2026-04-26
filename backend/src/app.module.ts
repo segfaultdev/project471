@@ -18,6 +18,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { StoresModule } from './stores/stores.module';
 import { ProductsModule } from './products/products.module';
+import { CategoriesModule } from './categories/categories.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -45,10 +46,11 @@ import { RolesGuard } from './auth/guards/roles.guard';
     }),
     
     // Feature Modules
-    UsersModule,     // User management (CRUD operations)
-    AuthModule,      // Authentication (login, register, JWT)
-    StoresModule,    // Store/Vendor management (CRUD operations)
-    ProductsModule,  // Product catalog (CRUD operations)
+    UsersModule,       // User management (CRUD operations)
+    AuthModule,        // Authentication (login, register, JWT)
+    StoresModule,      // Store/Vendor management (CRUD operations)
+    ProductsModule,    // Product catalog (CRUD operations)
+    CategoriesModule,  // Product categories (CRUD operations)
   ],
   
   controllers: [AppController],  // Root controller

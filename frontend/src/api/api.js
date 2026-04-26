@@ -82,6 +82,18 @@ export const productsAPI = {
   delete: (id) => api.delete(`/products/${id}`),
 };
 
+// Categories API calls
+export const categoriesAPI = {
+  getAll: () => api.get('/categories'),
+  getOne: (id) => api.get(`/categories/${id}`),
+  getByStore: (storeId) => api.get(`/categories/store/${storeId}`),
+  getBySlug: (slug) => api.get(`/categories/slug/${slug}`),
+  getMyCategories: () => api.get('/categories/my-categories'),
+  create: (categoryData) => api.post('/categories', categoryData),
+  update: (id, categoryData) => api.patch(`/categories/${id}`, categoryData),
+  delete: (id) => api.delete(`/categories/${id}`),
+};
+
 // Orders API calls (via stores module)
 export const ordersAPI = {
   create: (orderData) => api.post('/stores/orders', orderData),

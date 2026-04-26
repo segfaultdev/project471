@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { productsAPI, storesAPI } from '../api/api';
+import { productsAPI, storesAPI, categoriesAPI } from '../api/api';
 import { Download, ArrowLeft, Loader2, ExternalLink } from 'lucide-react';
 import { useEffect } from 'react';
 
@@ -11,13 +11,17 @@ const ImportProduct = () => {
   const [importing, setImporting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
   
   const [product, setProduct] = useState({
     name: '',
     description: '',
     price: '',
     stock: '',
-    category: '',
+    categoryId: '',
+    customCategory: '',
     storeId: '',
     image: '',
   });
@@ -25,6 +29,7 @@ const ImportProduct = () => {
 
   useEffect(() => {
     fetchStores();
+    fetchCategories();
   }, []);
 
   const fetchStores = async () => {
@@ -33,9 +38,29 @@ const ImportProduct = () => {
       setStores(response.data);
       if (response.data.length > 0) {
         setProduct(prev => ({ ...prev, storeId: response.data[0].id }));
+        // Fetch categories for first store
+        fetchCategoriesForStore(response.data[0].id);
       }
     } catch (err) {
       console.error('Failed to fetch stores:', err);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoriesAPI.getAll();
+      setCategories(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    }
+  };
+
+  const fetchCategoriesForStore = async (storeId) => {
+    try {
+      const response = await categoriesAPI.getByStore(storeId);
+      setCategories(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch store categories:', err);
     }
   };
 
@@ -56,7 +81,8 @@ const ImportProduct = () => {
         description: 'This product was imported using a Facebook or Instagram link. Edit the details as needed.',
         price: '1200',
         stock: '10',
-        category: 'Fashion',
+        categoryId: '',
+        customCategory: '',
         storeId: product.storeId,
         image: '',
       });
@@ -65,10 +91,16 @@ const ImportProduct = () => {
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setProduct({
       ...product,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    // If store changed, fetch categories for that store
+    if (name === 'storeId') {
+      fetchCategoriesForStore(value);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -103,15 +135,32 @@ const ImportProduct = () => {
     setSaving(true);
 
     try {
+      let categoryId = product.categoryId;
+
+      // If custom category is provided, create it first
+      if (product.customCategory.trim() && !categoryId) {
+        try {
+          const newCategoryRes = await categoriesAPI.create({
+            name: product.customCategory,
+            storeId: product.storeId,
+          });
+          categoryId = newCategoryRes.data.id;
+        } catch (err) {
+          setError('Failed to create category');
+          setSaving(false);
+          return;
+        }
+      }
+
       const productData = {
-        ...product,
+        name: product.name,
+        description: product.description,
         price: parseFloat(product.price),
         stock: parseInt(product.stock) || 0,
+        categoryId: categoryId || null,
+        storeId: product.storeId,
         images: product.image ? [product.image] : [],
       };
-      
-      // Remove the single image field as backend expects images array
-      delete productData.image;
 
       await productsAPI.create(productData);
       navigate('/my-products');
@@ -300,15 +349,68 @@ const ImportProduct = () => {
                   <label htmlFor="category" className="block text-sm font-semibold text-slate-900 mb-2">
                     Category
                   </label>
-                  <input
-                    type="text"
-                    id="category"
-                    name="category"
-                    value={product.category}
-                    onChange={handleChange}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                    placeholder="e.g., Fashion"
-                  />
+                  
+                  {!showNewCategoryInput ? (
+                    <div className="space-y-2">
+                      <select
+                        id="category"
+                        name="categoryId"
+                        value={product.categoryId}
+                        onChange={(e) => {
+                          setProduct({
+                            ...product,
+                            categoryId: e.target.value,
+                            customCategory: '',
+                          });
+                        }}
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 bg-white"
+                      >
+                        <option value="">Select a category...</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                      
+                      <button
+                        type="button"
+                        onClick={() => setShowNewCategoryInput(true)}
+                        className="w-full px-3 py-2 text-xs font-semibold text-blue-600 hover:text-blue-700 rounded hover:bg-blue-50 transition"
+                      >
+                        + Create New Category
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={product.customCategory}
+                        onChange={(e) => setProduct({
+                          ...product,
+                          customCategory: e.target.value,
+                          categoryId: '',
+                        })}
+                        placeholder="Enter new category name..."
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      />
+                      
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewCategoryInput(false);
+                          setProduct({
+                            ...product,
+                            customCategory: '',
+                            categoryId: '',
+                          });
+                        }}
+                        className="w-full px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-700 rounded hover:bg-slate-100 transition"
+                      >
+                        Back to Existing Categories
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -6,6 +6,7 @@
  * 3. Provides the ProductsService (business logic)
  * 4. Exports ProductsService (so other modules can use it)
  * 5. Imports StoresModule (to verify store ownership)
+ * 6. Imports CategoriesModule (to validate category ownership)
  */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -13,6 +14,7 @@ import { Product } from './entities/product.entity';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
 import { StoresModule } from '../stores/stores.module';
+import { CategoriesModule } from '../categories/categories.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { StoresModule } from '../stores/stores.module';
     TypeOrmModule.forFeature([Product]),
     // Import StoresModule to access StoresService for ownership verification
     StoresModule,
+    // Import CategoriesModule to validate category ownership
+    CategoriesModule,
   ],
   controllers: [ProductsController], // Register HTTP routes
   providers: [ProductsService],      // Register services for dependency injection

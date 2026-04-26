@@ -2,9 +2,11 @@
  * Product Entity - Defines the database table structure for products
  * This represents the 'products' table in PostgreSQL
  * Each product belongs to one store (Many-to-One relationship)
+ * Each product belongs to one category (Many-to-One relationship)
  */
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Store } from '../../stores/entities/store.entity';
+import { Category } from '../../categories/entities/category.entity';
 
 @Entity('products') // Creates table named 'products'
 export class Product {
@@ -29,9 +31,14 @@ export class Product {
   @Column({ default: 0 })
   stock: number;
 
-  // Product category (e.g., 'Electronics', 'Clothing', 'Food')
+  // Product category - Many products belong to one category
+  @ManyToOne(() => Category, { eager: false, onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'categoryId' })
+  category: Category;
+
+  // Category ID - Foreign key to categories table (nullable for backward compatibility)
   @Column({ nullable: true })
-  category: string;
+  categoryId: string;
 
   // Product images - stored as JSON array of URLs
   // Example: ["url1.jpg", "url2.jpg"]

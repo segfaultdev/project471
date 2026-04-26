@@ -1,109 +1,108 @@
 import { Link } from "react-router-dom";
-import { CheckCircle, Package, ArrowRight } from "lucide-react";
-import ShopNavbar from "../components/ShopNavbar";
+import {
+  CheckCircle,
+  Package,
+  ArrowRight,
+  ClipboardList,
+  Truck,
+  Home,
+} from "lucide-react";
+
+const statusSteps = [
+  {
+    title: "Pending",
+    description: "Your order has been placed and is waiting for seller confirmation.",
+    icon: ClipboardList,
+  },
+  {
+    title: "Confirmed",
+    description: "The seller confirms your order and prepares the products.",
+    icon: CheckCircle,
+  },
+  {
+    title: "Shipped",
+    description: "Your order is on the way to your delivery address.",
+    icon: Truck,
+  },
+  {
+    title: "Delivered",
+    description: "After delivery, you can leave a verified review.",
+    icon: Package,
+  },
+];
 
 const CheckoutSuccess = () => {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <ShopNavbar />
+    <main className="min-h-screen bg-neutral-50 text-neutral-950">
+      <header className="border-b border-neutral-200 bg-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
+          <Link to="/stores" className="flex items-center gap-3">
+            <img src="/shoplinker.svg" alt="Shoplinker" className="h-9 w-auto" />
+          </Link>
 
-      <div className="mx-auto max-w-2xl px-6 py-16 lg:px-8">
-        <div className="text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-green-50 text-green-600 mx-auto mb-6">
-            <CheckCircle className="h-12 w-12" />
-          </div>
+          <Link
+            to="/stores"
+            className="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+          >
+            Continue Shopping
+          </Link>
+        </div>
+      </header>
 
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Order Placed Successfully!
-          </h1>
+      <section className="mx-auto max-w-3xl px-5 py-16 text-center lg:px-8">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-green-50 text-green-600">
+          <CheckCircle className="h-12 w-12" />
+        </div>
 
-          <p className="text-lg text-slate-600 mb-8">
-            Thank you for your order. We've received your order and will process
-            it shortly.
-          </p>
+        <h1 className="mt-8 text-4xl font-bold tracking-tight">
+          Order placed successfully
+        </h1>
 
-          <div className="rounded-2xl bg-white p-6 border border-slate-200 mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <Package className="h-5 w-5 text-blue-600" />
-              <h2 className="text-lg font-semibold text-slate-900">
-                What's Next?
-              </h2>
-            </div>
+        <p className="mx-auto mt-4 max-w-xl text-lg leading-8 text-neutral-600">
+          Your order is now pending. The seller will review it, confirm it, and update the delivery status.
+        </p>
 
-            <div className="space-y-3 text-left">
-              <div className="flex items-start gap-3">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-sm font-semibold">
-                  1
+        <div className="mt-10 rounded-[2rem] border border-neutral-200 bg-white p-6 text-left shadow-sm">
+          <h2 className="text-xl font-bold">What happens next?</h2>
+
+          <div className="mt-6 space-y-4">
+            {statusSteps.map((step, index) => {
+              const Icon = step.icon;
+
+              return (
+                <div key={step.title} className="flex gap-4 rounded-2xl bg-neutral-50 p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-950 text-white">
+                    {index === 0 ? <Icon className="h-5 w-5" /> : <span className="text-sm font-bold">{index + 1}</span>}
+                  </div>
+                  <div>
+                    <p className="font-bold">{step.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-neutral-600">{step.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-900">
-                    Order Confirmation
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    You'll receive an email confirmation shortly.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-sm font-semibold">
-                  2
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-900">
-                    Processing
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    We'll prepare your order for shipping.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-sm font-semibold">
-                  3
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-900">Shipping</p>
-                  <p className="text-sm text-slate-600">
-                    Your order will be delivered to your address.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-sm font-semibold">
-                  4
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-900">Delivery</p>
-                  <p className="text-sm text-slate-600">
-                    Pay cash on delivery when your order arrives.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/stores"
-              className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
-            >
-              Continue Shopping
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-200"
-            >
-              Back to Home
-            </Link>
+              );
+            })}
           </div>
         </div>
-      </div>
-    </div>
+
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link
+            to="/stores"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-neutral-950 px-7 py-4 font-semibold text-white transition hover:bg-neutral-800"
+          >
+            Continue Shopping
+            <ArrowRight className="h-5 w-5" />
+          </Link>
+
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200 bg-white px-7 py-4 font-semibold text-neutral-800 transition hover:border-neutral-950"
+          >
+            <Home className="h-5 w-5" />
+            Go to Dashboard
+          </Link>
+        </div>
+      </section>
+    </main>
   );
 };
 

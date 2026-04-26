@@ -2,11 +2,11 @@
  * StoresController - Handles HTTP requests for store operations
  * All routes are prefixed with '/stores'
  * All routes are protected by JWT authentication (global guard)
- * 
+ *
  * Role-based access:
  * - Create/Update/Delete stores: Only VENDOR role
  * - View stores: All authenticated users
- * 
+ *
  * Available endpoints:
  * POST   /stores              - Create new store (Vendor only)
  * GET    /stores              - Get all stores
@@ -17,11 +17,23 @@
  * PATCH  /stores/:id          - Update store (Vendor only, own stores)
  * DELETE /stores/:id          - Delete store (Vendor only, own stores)
  */
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Request,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { StoresService } from './stores.service';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { UserRole } from '../users/entities/user.entity';
 
 @Controller('stores') // All routes start with /stores
@@ -40,13 +52,17 @@ export class StoresController {
   @Post()
   create(@Request() req, @Body() createStoreDto: CreateStoreDto) {
     // Auto-set ownerId from authenticated user
-    return this.storesService.create({ ...createStoreDto, ownerId: req.user.id });
+    return this.storesService.create({
+      ...createStoreDto,
+      ownerId: req.user.id,
+    });
   }
 
   /**
    * GET /stores - Get all stores
    * Example: GET http://localhost:3000/stores
    */
+  @Public()
   @Get()
   findAll() {
     return this.storesService.findAll();
@@ -66,6 +82,7 @@ export class StoresController {
    * GET /stores/owner/:ownerId - Get stores by owner
    * Example: GET http://localhost:3000/stores/owner/user-uuid
    */
+  @Public()
   @Get('owner/:ownerId')
   findByOwner(@Param('ownerId') ownerId: string) {
     return this.storesService.findByOwner(ownerId);
@@ -76,6 +93,7 @@ export class StoresController {
    * Example: GET http://localhost:3000/stores/slug/my-store-name
    * IMPORTANT: This must come BEFORE :id route
    */
+  @Public()
   @Get('slug/:slug')
   async findBySlug(@Param('slug') slug: string) {
     const store = await this.storesService.findBySlug(slug);
@@ -89,6 +107,7 @@ export class StoresController {
    * GET /stores/:id - Get single store by ID
    * Example: GET http://localhost:3000/stores/uuid-here
    */
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.storesService.findOne(id);
@@ -102,7 +121,11 @@ export class StoresController {
    */
   @Roles(UserRole.VENDOR)
   @Patch(':id')
-  async update(@Request() req, @Param('id') id: string, @Body() updateStoreDto: UpdateStoreDto) {
+  async update(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() updateStoreDto: UpdateStoreDto,
+  ) {
     // Verify store exists and belongs to the current user
     const store = await this.storesService.findOne(id);
     if (!store) {

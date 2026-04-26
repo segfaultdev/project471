@@ -20,11 +20,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS for frontend requests
-  // Allow requests from frontend running on port 5173 or 5174
+  // Allow requests from frontend running on port 5173, 5174, or 5175
   app.enableCors({
     origin: [
       'http://localhost:5173',
       'http://localhost:5174',
+      'http://localhost:5175',
       'http://localhost:3000',
     ],
     credentials: true,

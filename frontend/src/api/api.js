@@ -107,4 +107,17 @@ export const notificationsAPI = {
   delete: (id) => api.delete(`/notifications/${id}`),
 };
 
+// Reviews API calls
+export const reviewsAPI = {
+  create: (reviewData) => api.post("/reviews", reviewData),
+  getByProduct: (productId) => api.get(`/reviews/product/${productId}`),
+  getAverageRating: (productId) =>
+    api.get(`/reviews/product/${productId}/rating`),
+  getReviewStatus: (productId) =>
+    api.get(`/reviews/user/product/${productId}/status`),
+  getUserReview: (productId) => api.get(`/reviews/user/product/${productId}`),
+  update: (id, reviewData) => api.patch(`/reviews/${id}`, reviewData),
+  delete: (id) => api.delete(`/reviews/${id}`),
+};
+
 export default api;

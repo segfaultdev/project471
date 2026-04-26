@@ -1,46 +1,84 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import Navbar from './components/Navbar';
-import ProtectedRoute from './components/ProtectedRoute';
-import Homepage from './pages/Homepage';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import MyStores from './pages/MyStores';
-import MyProducts from './pages/MyProducts';
-import Products from './pages/Products';
-import Stores from './pages/Stores';
-import StoreDetail from './pages/StoreDetail';
-import ProductDetail from './pages/ProductDetail';
-import Cart from './pages/Cart';
-import Wishlist from './pages/Wishlist';
-import Checkout from './pages/Checkout';
-import CheckoutSuccess from './pages/CheckoutSuccess';
-import Notifications from './pages/Notifications';
-import MyOrders from './pages/MyOrders';
-import Sell from './pages/Sell';
-import ImportProduct from './pages/ImportProduct';
-import BulkImport from './pages/BulkImport';
-import Coupons from './pages/Coupons';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+import Homepage from "./pages/Homepage";
+import Login from "./pages/Login";
+import CustomerLogin from "./pages/CustomerLogin";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import MyStores from "./pages/MyStores";
+import MyProducts from "./pages/MyProducts";
+import Stores from "./pages/Stores";
+import StoreDetail from "./pages/StoreDetail";
+import ProductDetail from "./pages/ProductDetail";
+import Cart from "./pages/Cart";
+import Wishlist from "./pages/Wishlist";
+import StoreWishlist from "./pages/StoreWishlist";
+import Checkout from "./pages/Checkout";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import Sell from "./pages/Sell";
+import ImportProduct from "./pages/ImportProduct";
+import BulkImport from "./pages/BulkImport";
+import MyOrders from "./pages/MyOrders";
+import Coupons from "./pages/Coupons";
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Routes */}
+
           <Route path="/" element={<Homepage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/shop-login" element={<CustomerLogin />} />
           <Route path="/register" element={<Register />} />
           <Route path="/sell" element={<Sell />} />
+
+          <Route path="/stores" element={<Stores />} />
           <Route path="/store/:slug" element={<StoreDetail />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/checkout/success" element={<CheckoutSuccess />} />
+          <Route path="/shop-wishlist" element={<StoreWishlist />} />
 
-          {/* Protected Routes with Navbar */}
+          <Route path="/products" element={<Navigate to="/stores" replace />} />
+
+          <Route
+            path="/wishlist"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <Navbar />
+                  <Wishlist />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute loginPath="/shop-login">
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/checkout/success"
+            element={
+              <ProtectedRoute loginPath="/shop-login">
+                <CheckoutSuccess />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/dashboard"
             element={
@@ -52,41 +90,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/notifications"
-            element={
-              <ProtectedRoute>
-                <div>
-                  <Navbar />
-                  <Notifications />
-                </div>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/products"
-            element={
-              <ProtectedRoute>
-                <div>
-                  <Navbar />
-                  <Products />
-                </div>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/stores"
-            element={
-              <ProtectedRoute>
-                <div>
-                  <Navbar />
-                  <Stores />
-                </div>
-              </ProtectedRoute>
-            }
-          />
 
-          {/* Vendor-Only Routes */}
           <Route
             path="/my-stores"
             element={
@@ -98,6 +102,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/my-products"
             element={
@@ -109,6 +114,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/coupons"
             element={
@@ -131,6 +137,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/bulk-import"
             element={
@@ -142,10 +149,11 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/my-orders"
             element={
-              <ProtectedRoute requireVendor={true}>
+              <ProtectedRoute>
                 <div>
                   <Navbar />
                   <MyOrders />
@@ -153,6 +161,9 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+
         </Routes>
       </Router>
     </AuthProvider>

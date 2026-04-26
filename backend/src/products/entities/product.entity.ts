@@ -56,6 +56,14 @@ export class Product {
   @Column({ type: 'decimal', precision: 8, scale: 2, nullable: true })
   weight: number;
 
+  // Average rating (computed from reviews)
+  @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
+  averageRating: number;
+
+  // Number of reviews
+  @Column({ default: 0 })
+  reviewCount: number;
+
   // Timestamp - automatically set when product is created
   @CreateDateColumn()
   createdAt: Date;

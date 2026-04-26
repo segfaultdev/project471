@@ -15,6 +15,7 @@ export enum OrderStatus {
   CONFIRMED = 'confirmed',
   PROCESSING = 'processing',
   SHIPPED = 'shipped',
+  COMPLETED = 'completed',
   DELIVERED = 'delivered',
   CANCELLED = 'cancelled',
 }
@@ -52,7 +53,7 @@ export class Order {
 
   @Column('json')
   items: Array<{
-    productId: number;
+    productId: string;
     name: string;
     price: number;
     quantity: number;

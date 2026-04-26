@@ -35,7 +35,7 @@ export class Coupon {
   @Column({ default: true })
   isActive: boolean;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   expiresAt: Date;
 
   @CreateDateColumn()

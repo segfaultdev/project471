@@ -13,6 +13,7 @@
  * GET    /products/:id                - Get single product by ID
  * GET    /products/store/:storeId     - Get products by store
  * GET    /products/category/:category - Get products by category
+ * GET    /products/compare/:productId - Get similar products for comparison
  * GET    /products/my-products        - Get products from vendor's stores
  * PATCH  /products/:id                - Update product (Vendor only, own store)
  * DELETE /products/:id                - Delete product (Vendor only, own store)
@@ -100,6 +101,19 @@ export class ProductsController {
   @Get('category/:category')
   findByCategory(@Param('category') category: string) {
     return this.productsService.findByCategory(category);
+  }
+
+  /**
+   * GET /products/compare/:productId - Get similar products for comparison
+   * Example: GET http://localhost:3000/products/compare/uuid-here
+   */
+  @Get('compare/:productId')
+  async compareSimilarProducts(@Param('productId') productId: string) {
+    const product = await this.productsService.findOne(productId);
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+    return this.productsService.findSimilarProducts(product.name, productId);
   }
 
   /**

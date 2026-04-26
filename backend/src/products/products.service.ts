@@ -99,4 +99,27 @@ export class ProductsService {
   async remove(id: string): Promise<void> {
     await this.productsRepository.delete(id);
   }
+
+  /**
+   * Find similar products from multiple sellers
+   * @param productName - Name of product to find similar ones
+   * @param excludeProductId - Product ID to exclude from results
+   * @returns Promise<Product[]> - Array of similar products from different stores
+   * SQL: SELECT * FROM products WHERE LOWER(name) LIKE LOWER(?) AND id != ? ORDER BY store information
+   */
+  async findSimilarProducts(productName: string, excludeProductId?: string): Promise<Product[]> {
+    const query = this.productsRepository.createQueryBuilder('product')
+      .innerJoinAndSelect('product.store', 'store')
+      .where('LOWER(product.name) LIKE LOWER(:name)', { name: `%${productName}%` })
+      .andWhere('product.isAvailable = :isAvailable', { isAvailable: true })
+      .orderBy('store.rating', 'DESC')
+      .addOrderBy('product.price', 'ASC')
+      .limit(10);
+
+    if (excludeProductId) {
+      query.andWhere('product.id != :excludeProductId', { excludeProductId });
+    }
+
+    return query.getMany();
+  }
 }

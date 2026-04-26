@@ -11,6 +11,7 @@ import MyProducts from './pages/MyProducts';
 import Products from './pages/Products';
 import Stores from './pages/Stores';
 import StoreDetail from './pages/StoreDetail';
+import ProductComparison from './pages/ProductComparison';
 import Sell from './pages/Sell';
 import ImportProduct from './pages/ImportProduct';
 import BulkImport from './pages/BulkImport';
@@ -58,6 +59,17 @@ function App() {
                 <div>
                   <Navbar />
                   <Stores />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compare/:productId"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <Navbar />
+                  <ProductComparison />
                 </div>
               </ProtectedRoute>
             }

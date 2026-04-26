@@ -54,6 +54,14 @@ export class Store {
   @Column({ nullable: true })
   banner: string;
 
+  // Store rating - average rating from customers (0-5)
+  @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
+  rating: number;
+
+  // Delivery time in days - estimated delivery timeframe
+  @Column({ type: 'int', default: 3 })
+  deliveryDays: number;
+
   // Is store active/approved
   @Column({ default: true })
   isActive: boolean;

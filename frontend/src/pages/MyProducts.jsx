@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { productsAPI, storesAPI } from "../api/api";
+import ConfirmModal from "../components/ConfirmModal";
 
 const LOW_STOCK_THRESHOLD = 5;
 
@@ -38,6 +39,8 @@ const MyProducts = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [deleteProductTarget, setDeleteProductTarget] = useState(null);
+  const [deleteProductLoading, setDeleteProductLoading] = useState(false);
   const [formData, setFormData] = useState(emptyProductForm);
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState("");
@@ -227,19 +230,25 @@ const MyProducts = () => {
   };
 
   const handleDelete = async (product) => {
-    const confirmed = window.confirm(
-      `Delete "${product.name}"? This cannot be undone.`,
-    );
+    setError("");
+    setSuccess("");
+    setDeleteProductTarget(product);
+  };
 
-    if (!confirmed) return;
+  const confirmDeleteProduct = async () => {
+    if (!deleteProductTarget || deleteProductLoading) return;
 
     try {
-      await productsAPI.delete(product.id);
+      setDeleteProductLoading(true);
+      await productsAPI.delete(deleteProductTarget.id);
       setSuccess("Product deleted successfully.");
+      setDeleteProductTarget(null);
       await fetchData();
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete product.");
+    } finally {
+      setDeleteProductLoading(false);
     }
   };
 
@@ -289,6 +298,19 @@ const MyProducts = () => {
 
   return (
     <main className="min-h-screen bg-[#f6f1e7] text-emerald-950">
+      <ConfirmModal
+        isOpen={Boolean(deleteProductTarget)}
+        title="Delete product?"
+        message={
+          deleteProductTarget
+            ? `Delete "${deleteProductTarget.name}"? This cannot be undone.`
+            : ""
+        }
+        onConfirm={confirmDeleteProduct}
+        onCancel={() => !deleteProductLoading && setDeleteProductTarget(null)}
+        isLoading={deleteProductLoading}
+      />
+
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
         <section className="relative overflow-hidden rounded-[2.5rem] bg-emerald-950 p-8 text-white shadow-[0_30px_100px_rgba(8,28,21,0.2)] md:p-10">
           <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-lime-300/20 blur-3xl" />

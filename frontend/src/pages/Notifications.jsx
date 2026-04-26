@@ -1,38 +1,84 @@
-import { useEffect, useState } from 'react';
-import { notificationsAPI } from '../api/api';
-import { useAuth } from '../context/AuthContext';
+import { useEffect, useCallback, useState } from "react";
+import { notificationsAPI } from "../api/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Notifications() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const loadNotifications = async () => {
+  const notifyNavbar = () => {
+    window.dispatchEvent(new Event("notifications:updated"));
+  };
+
+  const loadNotifications = useCallback(async () => {
+    if (!user?.id) return;
+
     try {
+      setLoading(true);
       const res = await notificationsAPI.getByBuyer(user.id);
-      setNotifications(res.data);
+      setNotifications(res.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  const markAsRead = async (id) => {
+    try {
+      await notificationsAPI.markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
+      );
+      notifyNavbar();
     } catch (err) {
       console.error(err);
     }
   };
 
-  const markAsRead = async (id) => {
-    await notificationsAPI.markAsRead(id);
-    loadNotifications();
-  };
-
   const deleteNotification = async (id) => {
-    await notificationsAPI.delete(id);
-    loadNotifications();
+    try {
+      await notificationsAPI.delete(id);
+      setNotifications((prev) => prev.filter((item) => item.id !== id));
+      notifyNavbar();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
-    if (user) loadNotifications();
-  }, [user]);
+    if (!user?.id) return;
+
+    loadNotifications();
+
+    const intervalId = window.setInterval(loadNotifications, 10000);
+
+    const handleFocus = () => loadNotifications();
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        loadNotifications();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [user?.id, loadNotifications]);
 
   return (
     <div className="min-h-screen bg-slate-50 px-8 py-10">
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow p-8">
         <h1 className="text-3xl font-bold mb-6">Notifications</h1>
+
+        {loading && notifications.length === 0 && (
+          <p className="text-slate-500 mb-4">Loading notifications...</p>
+        )}
 
         {notifications.length === 0 && (
           <p>No notifications available</p>

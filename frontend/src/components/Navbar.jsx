@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -16,7 +16,7 @@ import {
   ClipboardList,
   LayoutDashboard,
 } from "lucide-react";
-import { productsAPI } from "../api/api";
+import { productsAPI, notificationsAPI } from "../api/api";
 
 const baseLink =
   "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-black transition hover:bg-white/70";
@@ -37,6 +37,7 @@ const Navbar = () => {
 
   const [lowStockProducts, setLowStockProducts] = useState([]);
   const [productCount, setProductCount] = useState(0);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const prevLowStockCount = useRef(0);
@@ -87,6 +88,22 @@ const Navbar = () => {
     }
   };
 
+  const fetchUnreadNotifications = useCallback(async () => {
+    if (!isAuthenticated || !user?.id || vendor) {
+      setUnreadNotificationsCount(0);
+      return;
+    }
+
+    try {
+      const response = await notificationsAPI.getByBuyer(user.id);
+      const items = response.data || response || [];
+      const unreadCount = items.filter((item) => !item.isRead).length;
+      setUnreadNotificationsCount(unreadCount);
+    } catch (error) {
+      console.error("Failed to load notifications:", error);
+    }
+  }, [isAuthenticated, user?.id, vendor]);
+
   useEffect(() => {
     setShowNotifications(false);
     setMobileOpen(false);
@@ -98,6 +115,52 @@ const Navbar = () => {
       setProductCount(0);
     }
   }, [vendor, location.pathname]);
+
+  useEffect(() => {
+    if (!vendor) return;
+
+    fetchLowStockProducts();
+
+    const intervalId = window.setInterval(fetchLowStockProducts, 5000);
+
+    const handleFocus = () => fetchLowStockProducts();
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        fetchLowStockProducts();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [vendor]);
+
+  useEffect(() => {
+    if (!isAuthenticated || vendor || !user?.id) {
+      setUnreadNotificationsCount(0);
+      return;
+    }
+
+    fetchUnreadNotifications();
+    const intervalId = window.setInterval(fetchUnreadNotifications, 10000);
+
+    const handleRefresh = () => fetchUnreadNotifications();
+    const handleFocus = () => fetchUnreadNotifications();
+
+    window.addEventListener("notifications:updated", handleRefresh);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("notifications:updated", handleRefresh);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [isAuthenticated, vendor, user?.id, fetchUnreadNotifications]);
 
   useEffect(() => {
     if (lowStockProducts.length > 0 && prevLowStockCount.current === 0) {
@@ -114,6 +177,7 @@ const Navbar = () => {
   const customerLinks = [
     { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
     { label: "Browse Stores", to: "/stores", icon: Building2 },
+    { label: "Notifications", to: "/notifications", icon: Bell },
     { label: "Wishlist", to: "/wishlist", icon: Heart },
     { label: "Orders", to: "/my-orders", icon: ClipboardList },
   ];
@@ -163,7 +227,7 @@ const Navbar = () => {
 
         <div className="hidden items-center gap-2 lg:flex">{renderLinks()}</div>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           {isAuthenticated ? (
             <>
               {vendor && (
@@ -240,6 +304,21 @@ const Navbar = () => {
                 </div>
               )}
 
+              {!vendor && (
+                <Link
+                  to="/notifications"
+                  className="relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-emerald-950 shadow-sm ring-1 ring-emerald-950/10 transition hover:-translate-y-0.5 hover:bg-lime-100"
+                  aria-label="Notifications"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadNotificationsCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-lime-300 px-1 text-[11px] font-black text-emerald-950 ring-2 ring-[#f6f1e7]">
+                      {unreadNotificationsCount}
+                    </span>
+                  )}
+                </Link>
+              )}
+
               <div className="flex items-center gap-3 rounded-full bg-white px-3 py-2 shadow-sm ring-1 ring-emerald-950/10">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-950 text-lime-300">
                   <User className="h-4 w-4" />
@@ -283,7 +362,7 @@ const Navbar = () => {
         <button
           type="button"
           onClick={() => setMobileOpen((prev) => !prev)}
-          className="rounded-full bg-white p-3 text-emerald-950 shadow-sm ring-1 ring-emerald-950/10 md:hidden"
+          className="rounded-full bg-white p-3 text-emerald-950 shadow-sm ring-1 ring-emerald-950/10 lg:hidden"
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -291,7 +370,7 @@ const Navbar = () => {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-emerald-950/10 bg-[#f6f1e7] px-5 py-5 shadow-lg md:hidden">
+        <div className="border-t border-emerald-950/10 bg-[#f6f1e7] px-5 py-5 shadow-lg lg:hidden">
           <div className="flex flex-col gap-3">
             {renderLinks(true)}
 

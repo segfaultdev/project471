@@ -28,6 +28,7 @@ import ImportProduct from "./pages/ImportProduct";
 import BulkImport from "./pages/BulkImport";
 import MyOrders from "./pages/MyOrders";
 import Coupons from "./pages/Coupons";
+import Notifications from "./pages/Notifications";
 
 function App() {
   return (
@@ -157,6 +158,18 @@ function App() {
                 <div>
                   <Navbar />
                   <MyOrders />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <Navbar />
+                  <Notifications />
                 </div>
               </ProtectedRoute>
             }

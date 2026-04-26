@@ -2,7 +2,13 @@
  * CreateStoreDto - Data Transfer Object for creating stores
  * Validates input data before creating a store
  */
-import { IsString, IsNotEmpty, IsOptional, IsEmail, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEmail,
+  IsBoolean,
+} from 'class-validator';
 
 export class CreateStoreDto {
   // Store name - required
@@ -50,6 +56,16 @@ export class CreateStoreDto {
   @IsString({ message: 'Slug must be a string' })
   @IsOptional()
   slug?: string;
+
+  // Store category - optional (e.g., 'Electronics', 'Clothing', 'Food')
+  @IsString({ message: 'Category must be a string' })
+  @IsOptional()
+  category?: string;
+
+  // Store social link - optional (Facebook, Instagram, etc.)
+  @IsString({ message: 'Social link must be a string' })
+  @IsOptional()
+  socialLink?: string;
 
   // Is store active - optional, defaults to true
   @IsBoolean({ message: 'isActive must be a boolean' })

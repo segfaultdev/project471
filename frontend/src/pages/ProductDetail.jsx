@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { productsAPI, reviewsAPI } from "../api/api";
 import { useAuth } from "../context/AuthContext";
+import ConfirmModal from "../components/ConfirmModal";
 import {
   Loader2,
   ArrowLeft,
@@ -16,6 +17,9 @@ import {
 } from "lucide-react";
 
 const formatCurrency = (amount) => `৳${Number(amount || 0).toLocaleString("en-BD")}`;
+
+const DELETE_REVIEW_MESSAGE =
+  "Are you sure you want to delete your review? This action cannot be undone.";
 
 const StarRating = ({ rating, onRate, readonly = false, size = 20 }) => {
   const [hover, setHover] = useState(0);
@@ -67,6 +71,8 @@ const ProductDetail = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewDeleteLoading, setReviewDeleteLoading] = useState(false);
+  const [showDeleteReviewModal, setShowDeleteReviewModal] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState("");
 
@@ -172,13 +178,20 @@ const ProductDetail = () => {
     }
   };
 
-  const handleDeleteReview = async () => {
+  const handleDeleteReview = () => {
     if (!userReview) return;
 
-    const confirmed = window.confirm("Delete your review?");
-    if (!confirmed) return;
+    setReviewError("");
+    setReviewSuccess("");
+    setShowDeleteReviewModal(true);
+  };
+
+  const confirmDeleteReview = async () => {
+    if (!userReview || reviewDeleteLoading) return;
 
     try {
+      setReviewDeleteLoading(true);
+      setReviewError("");
       await reviewsAPI.delete(userReview.id);
       setUserReview(null);
       setReviewRating(5);
@@ -186,9 +199,12 @@ const ProductDetail = () => {
       setCanReview(true);
       setShowReviewForm(false);
       setReviewSuccess("Review deleted successfully.");
-      fetchReviews();
+      setShowDeleteReviewModal(false);
+      await fetchReviews();
     } catch (err) {
       setReviewError(err.response?.data?.message || "Failed to delete review.");
+    } finally {
+      setReviewDeleteLoading(false);
     }
   };
 
@@ -269,6 +285,14 @@ const ProductDetail = () => {
 
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-950">
+      <ConfirmModal
+        isOpen={showDeleteReviewModal}
+        message={DELETE_REVIEW_MESSAGE}
+        onConfirm={confirmDeleteReview}
+        onCancel={() => !reviewDeleteLoading && setShowDeleteReviewModal(false)}
+        isLoading={reviewDeleteLoading}
+      />
+
       <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
           <Link

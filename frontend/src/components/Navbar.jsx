@@ -163,7 +163,7 @@ const Navbar = () => {
 
         <div className="hidden items-center gap-2 lg:flex">{renderLinks()}</div>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           {isAuthenticated ? (
             <>
               {vendor && (
@@ -283,7 +283,7 @@ const Navbar = () => {
         <button
           type="button"
           onClick={() => setMobileOpen((prev) => !prev)}
-          className="rounded-full bg-white p-3 text-emerald-950 shadow-sm ring-1 ring-emerald-950/10 md:hidden"
+          className="rounded-full bg-white p-3 text-emerald-950 shadow-sm ring-1 ring-emerald-950/10 lg:hidden"
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -291,7 +291,7 @@ const Navbar = () => {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-emerald-950/10 bg-[#f6f1e7] px-5 py-5 shadow-lg md:hidden">
+        <div className="border-t border-emerald-950/10 bg-[#f6f1e7] px-5 py-5 shadow-lg lg:hidden">
           <div className="flex flex-col gap-3">
             {renderLinks(true)}
 

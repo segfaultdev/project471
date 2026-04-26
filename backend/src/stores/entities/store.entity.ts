@@ -3,7 +3,16 @@
  * This represents the 'stores' table in PostgreSQL
  * A store can have multiple products (One-to-Many relationship)
  */
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 @Entity('stores') // Creates table named 'stores'
@@ -53,6 +62,14 @@ export class Store {
   // Store banner/cover image URL
   @Column({ nullable: true })
   banner: string;
+
+  // Store category (e.g., 'Electronics', 'Clothing', 'Food')
+  @Column({ nullable: true })
+  category: string;
+
+  // Store social link (Facebook, Instagram, etc.)
+  @Column({ nullable: true })
+  socialLink: string;
 
   // Is store active/approved
   @Column({ default: true })

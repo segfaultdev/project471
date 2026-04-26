@@ -20,6 +20,7 @@ import { StoresModule } from './stores/stores.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { SocialImportModule } from './social-import/social-import.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -47,6 +48,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     ProductsModule, // Product catalog (CRUD operations)
     OrdersModule, // Order management (CRUD operations)
     ReviewsModule, // Product reviews and ratings
+    SocialImportModule, // Controlled demo Facebook/Instagram import lookups
   ],
 
   controllers: [AppController], // Root controller

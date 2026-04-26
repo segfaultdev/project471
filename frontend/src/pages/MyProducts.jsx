@@ -30,11 +30,13 @@ const emptyProductForm = {
   image: "",
 };
 
-const formatCurrency = (amount) => `৳${Number(amount || 0).toLocaleString("en-BD")}`;
+const formatCurrency = (amount) =>
+  `৳${Number(amount || 0).toLocaleString("en-BD")}`;
 
 const MyProducts = () => {
   const [products, setProducts] = useState([]);
   const [stores, setStores] = useState([]);
+  const [selectedStoreId, setSelectedStoreId] = useState("");
   const [stockChanges, setStockChanges] = useState({});
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -47,38 +49,78 @@ const MyProducts = () => {
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    fetchData();
+    fetchStores();
   }, []);
 
   useEffect(() => {
-    if (!editingProduct && stores.length === 1 && !formData.storeId) {
+    if (selectedStoreId) {
+      fetchProducts(selectedStoreId);
+    }
+  }, [selectedStoreId]);
+
+  useEffect(() => {
+    if (
+      !editingProduct &&
+      selectedStoreId &&
+      formData.storeId !== selectedStoreId
+    ) {
       setFormData((current) => ({
         ...current,
-        storeId: stores[0].id,
+        storeId: selectedStoreId,
       }));
     }
-  }, [stores, editingProduct, formData.storeId]);
+  }, [selectedStoreId, editingProduct, formData.storeId]);
 
   const normalizeArrayResponse = (response) => response?.data || response || [];
 
-  const fetchData = async () => {
+  const fetchStores = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const [productsRes, storesRes] = await Promise.all([
-        productsAPI.getMyProducts(),
-        storesAPI.getMyStores(),
-      ]);
-
-      const productsData = normalizeArrayResponse(productsRes);
+      const storesRes = await storesAPI.getMyStores();
       const storesData = normalizeArrayResponse(storesRes);
 
-      setProducts(productsData);
       setStores(storesData);
-      setStockChanges(getInitialStockChanges(productsData));
+
+      if (storesData.length === 0) {
+        setProducts([]);
+        setStockChanges({});
+        setSelectedStoreId("");
+        setLoading(false);
+        return;
+      }
+
+      setSelectedStoreId((currentSelectedStoreId) =>
+        storesData.some((store) => store.id === currentSelectedStoreId)
+          ? currentSelectedStoreId
+          : storesData.at(0)?.id || "",
+      );
     } catch (err) {
       setError("Failed to load products. Please refresh and try again.");
+      console.error(err);
+      setLoading(false);
+    }
+  };
+
+  const fetchProducts = async (storeId = selectedStoreId) => {
+    if (!storeId) return;
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const productsRes = await productsAPI.getByStore(storeId);
+      const productsData = normalizeArrayResponse(productsRes);
+
+      setProducts(productsData);
+      setStockChanges(getInitialStockChanges(productsData));
+    } catch (err) {
+      setError(
+        "Failed to load products for this store. Please refresh and try again.",
+      );
+      setProducts([]);
+      setStockChanges({});
       console.error(err);
     } finally {
       setLoading(false);
@@ -94,14 +136,22 @@ const MyProducts = () => {
   const resetForm = () => {
     setShowForm(false);
     setEditingProduct(null);
-    setFormData(stores.length === 1 ? { ...emptyProductForm, storeId: stores[0].id } : emptyProductForm);
+    setFormData(
+      selectedStoreId
+        ? { ...emptyProductForm, storeId: selectedStoreId }
+        : emptyProductForm,
+    );
     setImagePreview(null);
     setError("");
   };
 
   const openCreateForm = () => {
     setEditingProduct(null);
-    setFormData(stores.length === 1 ? { ...emptyProductForm, storeId: stores[0].id } : emptyProductForm);
+    setFormData(
+      selectedStoreId
+        ? { ...emptyProductForm, storeId: selectedStoreId }
+        : emptyProductForm,
+    );
     setImagePreview(null);
     setShowForm(true);
     setError("");
@@ -128,7 +178,7 @@ const MyProducts = () => {
       await productsAPI.update(product.id, { stock: updatedStock });
       setSuccess(`Stock updated for ${product.name}.`);
       setError("");
-      await fetchData();
+      await fetchProducts();
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update stock.");
@@ -141,6 +191,17 @@ const MyProducts = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleSelectedStoreChange = (storeId) => {
+    setSelectedStoreId(storeId);
+
+    if (!editingProduct) {
+      setFormData((current) => ({
+        ...current,
+        storeId,
+      }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -203,7 +264,8 @@ const MyProducts = () => {
       }
 
       resetForm();
-      await fetchData();
+      // Always refresh products for the currently selected store
+      await fetchProducts(selectedStoreId);
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to save product.");
@@ -243,7 +305,7 @@ const MyProducts = () => {
       await productsAPI.delete(deleteProductTarget.id);
       setSuccess("Product deleted successfully.");
       setDeleteProductTarget(null);
-      await fetchData();
+      await fetchProducts();
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete product.");
@@ -252,18 +314,30 @@ const MyProducts = () => {
     }
   };
 
-  const totalStock = products.reduce((sum, product) => sum + (Number(product.stock) || 0), 0);
+  const totalStock = products.reduce(
+    (sum, product) => sum + (Number(product.stock) || 0),
+    0,
+  );
   const lowStockCount = products.filter(
-    (product) => product.stock != null && Number(product.stock) <= LOW_STOCK_THRESHOLD && Number(product.stock) > 0,
+    (product) =>
+      product.stock != null &&
+      Number(product.stock) <= LOW_STOCK_THRESHOLD &&
+      Number(product.stock) > 0,
   ).length;
-  const outOfStockCount = products.filter((product) => !product.stock || Number(product.stock) <= 0).length;
+  const outOfStockCount = products.filter(
+    (product) => !product.stock || Number(product.stock) <= 0,
+  ).length;
+  const selectedStore =
+    stores.find((store) => store.id === selectedStoreId) || stores.at(0);
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f6f1e7]">
         <div className="text-center">
           <Loader2 className="mx-auto h-10 w-10 animate-spin text-emerald-950" />
-          <p className="mt-4 font-black text-emerald-950">Loading your products...</p>
+          <p className="mt-4 font-black text-emerald-950">
+            Loading your products...
+          </p>
         </div>
       </div>
     );
@@ -281,7 +355,8 @@ const MyProducts = () => {
               Create a store before adding products.
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-white/70">
-              Products need to belong to a storefront. Set up your first store, then come back to add products, stock, categories, and images.
+              Products need to belong to a storefront. Set up your first store,
+              then come back to add products, stock, categories, and images.
             </p>
             <Link
               to="/my-stores"
@@ -324,7 +399,8 @@ const MyProducts = () => {
                 Manage your products
               </h1>
               <p className="mt-3 max-w-2xl text-lg leading-8 text-white/70">
-                Add products, update stock, manage pricing, and keep your storefront ready for buyers.
+                Add products, update stock, manage pricing, and keep your
+                storefront ready for buyers.
               </p>
             </div>
 
@@ -354,7 +430,10 @@ const MyProducts = () => {
             {error && (
               <div className="flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">
                 <p className="font-semibold">{error}</p>
-                <button onClick={() => setError("")} className="rounded-full p-1 hover:bg-red-100">
+                <button
+                  onClick={() => setError("")}
+                  className="rounded-full p-1 hover:bg-red-100"
+                >
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -362,13 +441,51 @@ const MyProducts = () => {
             {success && (
               <div className="flex items-center justify-between rounded-2xl border border-lime-300 bg-lime-100 p-4 text-emerald-950">
                 <p className="font-black">{success}</p>
-                <button onClick={() => setSuccess("")} className="rounded-full p-1 hover:bg-lime-200">
+                <button
+                  onClick={() => setSuccess("")}
+                  className="rounded-full p-1 hover:bg-lime-200"
+                >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             )}
           </div>
         )}
+
+        <section className="mt-8 rounded-[2rem] border border-emerald-950/10 bg-white/85 p-5 shadow-sm backdrop-blur">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-emerald-950/50">
+                Viewing store
+              </p>
+              <h2 className="mt-1 text-2xl font-black text-emerald-950">
+                {selectedStore?.name || "Select a store"}
+              </h2>
+              <p className="mt-1 text-sm font-semibold text-emerald-950/60">
+                Product list, stock stats, and new products are scoped to this
+                store.
+              </p>
+            </div>
+
+            {stores.length > 1 ? (
+              <select
+                value={selectedStoreId}
+                onChange={(e) => handleSelectedStoreChange(e.target.value)}
+                className="rounded-full border border-emerald-950/10 bg-[#f6f1e7] px-5 py-3 font-black text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+              >
+                {stores.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    {store.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="rounded-full bg-[#f6f1e7] px-5 py-3 font-black text-emerald-950">
+                {selectedStore?.name}
+              </span>
+            )}
+          </div>
+        </section>
 
         <section className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-[2rem] border border-emerald-950/10 bg-white/80 p-6 shadow-sm">
@@ -423,7 +540,9 @@ const MyProducts = () => {
                   {editingProduct ? "Edit product" : "New product"}
                 </p>
                 <h2 className="mt-2 text-3xl font-black tracking-tight text-emerald-950">
-                  {editingProduct ? "Update product details" : "Add a product to your store"}
+                  {editingProduct
+                    ? "Update product details"
+                    : "Add a product to your store"}
                 </h2>
               </div>
               <button
@@ -436,11 +555,17 @@ const MyProducts = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+            <form
+              onSubmit={handleSubmit}
+              className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]"
+            >
               <div className="space-y-5">
                 <div className="grid gap-5 md:grid-cols-2">
                   <div>
-                    <label htmlFor="name" className="mb-2 block text-sm font-black text-emerald-950">
+                    <label
+                      htmlFor="name"
+                      className="mb-2 block text-sm font-black text-emerald-950"
+                    >
                       Product Name *
                     </label>
                     <input
@@ -456,14 +581,22 @@ const MyProducts = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="storeId" className="mb-2 block text-sm font-black text-emerald-950">
+                    <label
+                      htmlFor="storeId"
+                      className="mb-2 block text-sm font-black text-emerald-950"
+                    >
                       Store *
                     </label>
                     <select
                       id="storeId"
                       name="storeId"
                       value={formData.storeId}
-                      onChange={handleChange}
+                      onChange={(e) => {
+                        handleChange(e);
+                        if (!editingProduct) {
+                          handleSelectedStoreChange(e.target.value);
+                        }
+                      }}
                       required
                       className="w-full rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-4 py-3 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
                     >
@@ -478,7 +611,10 @@ const MyProducts = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="description" className="mb-2 block text-sm font-black text-emerald-950">
+                  <label
+                    htmlFor="description"
+                    className="mb-2 block text-sm font-black text-emerald-950"
+                  >
                     Description
                   </label>
                   <textarea
@@ -494,7 +630,10 @@ const MyProducts = () => {
 
                 <div className="grid gap-5 md:grid-cols-3">
                   <div>
-                    <label htmlFor="price" className="mb-2 block text-sm font-black text-emerald-950">
+                    <label
+                      htmlFor="price"
+                      className="mb-2 block text-sm font-black text-emerald-950"
+                    >
                       Price *
                     </label>
                     <input
@@ -512,7 +651,10 @@ const MyProducts = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="stock" className="mb-2 block text-sm font-black text-emerald-950">
+                    <label
+                      htmlFor="stock"
+                      className="mb-2 block text-sm font-black text-emerald-950"
+                    >
                       Stock
                     </label>
                     <input
@@ -528,7 +670,10 @@ const MyProducts = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="weight" className="mb-2 block text-sm font-black text-emerald-950">
+                    <label
+                      htmlFor="weight"
+                      className="mb-2 block text-sm font-black text-emerald-950"
+                    >
                       Weight (kg)
                     </label>
                     <input
@@ -546,7 +691,10 @@ const MyProducts = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="category" className="mb-2 block text-sm font-black text-emerald-950">
+                  <label
+                    htmlFor="category"
+                    className="mb-2 block text-sm font-black text-emerald-950"
+                  >
                     Category
                   </label>
                   <input
@@ -562,7 +710,9 @@ const MyProducts = () => {
               </div>
 
               <div className="rounded-[2rem] bg-[#f6f1e7] p-5">
-                <h3 className="text-lg font-black text-emerald-950">Product Image</h3>
+                <h3 className="text-lg font-black text-emerald-950">
+                  Product Image
+                </h3>
                 <p className="mt-1 text-sm font-semibold text-emerald-950/60">
                   Upload one clear image. Recommended: square product photo.
                 </p>
@@ -631,10 +781,11 @@ const MyProducts = () => {
               <Package className="h-10 w-10" />
             </div>
             <h3 className="mt-6 text-2xl font-black text-emerald-950">
-              No products yet
+              No products in this store yet
             </h3>
             <p className="mx-auto mt-3 max-w-xl font-semibold leading-7 text-emerald-950/60">
-              Add your first product manually or import a product post link to start filling your store.
+              Add your first product manually or import a product post link for{" "}
+              {selectedStore?.name || "this store"}.
             </p>
             {!showForm && (
               <button
@@ -649,7 +800,9 @@ const MyProducts = () => {
         ) : (
           <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {products.map((product) => {
-              const currentStock = Number(stockChanges[product.id] ?? product.stock ?? 0);
+              const currentStock = Number(
+                stockChanges[product.id] ?? product.stock ?? 0,
+              );
               const productStock = Number(product.stock ?? 0);
 
               return (
@@ -693,7 +846,9 @@ const MyProducts = () => {
                     <div className="mt-5 rounded-[1.5rem] bg-[#f6f1e7] p-4">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="font-black text-emerald-950">Inventory</p>
+                          <p className="font-black text-emerald-950">
+                            Inventory
+                          </p>
                           <p className="text-xs font-semibold text-emerald-950/55">
                             Current stock: {productStock}
                           </p>
@@ -707,14 +862,18 @@ const MyProducts = () => {
                                 : "bg-red-100 text-red-700"
                           }`}
                         >
-                          {productStock > 0 ? `${productStock} left` : "Out of stock"}
+                          {productStock > 0
+                            ? `${productStock} left`
+                            : "Out of stock"}
                         </span>
                       </div>
 
                       <div className="mt-4 flex items-center overflow-hidden rounded-full border border-emerald-950/10 bg-white">
                         <button
                           type="button"
-                          onClick={() => handleStockChange(product.id, currentStock - 1)}
+                          onClick={() =>
+                            handleStockChange(product.id, currentStock - 1)
+                          }
                           className="flex h-11 w-12 items-center justify-center font-black text-emerald-950 transition hover:bg-lime-100"
                         >
                           -
@@ -723,12 +882,16 @@ const MyProducts = () => {
                           type="number"
                           min="0"
                           value={currentStock}
-                          onChange={(e) => handleStockChange(product.id, e.target.value)}
+                          onChange={(e) =>
+                            handleStockChange(product.id, e.target.value)
+                          }
                           className="w-full border-x border-emerald-950/10 py-2 text-center font-black text-emerald-950 outline-none"
                         />
                         <button
                           type="button"
-                          onClick={() => handleStockChange(product.id, currentStock + 1)}
+                          onClick={() =>
+                            handleStockChange(product.id, currentStock + 1)
+                          }
                           className="flex h-11 w-12 items-center justify-center font-black text-emerald-950 transition hover:bg-lime-100"
                         >
                           +

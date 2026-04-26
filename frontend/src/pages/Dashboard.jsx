@@ -102,31 +102,34 @@ const EmptyState = ({ icon: Icon, title, description, actionLabel, actionHref })
   </div>
 );
 
+const emptyVendorStats = {
+  totalProducts: 0,
+  totalStock: 0,
+  lowStockProducts: 0,
+  totalOrders: 0,
+  pendingOrders: 0,
+  deliveredOrders: 0,
+  returnedOrders: 0,
+};
+
 const Dashboard = () => {
   const { user, isVendor } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stores, setStores] = useState([]);
+  const [selectedStoreId, setSelectedStoreId] = useState("");
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [storeSearchQuery, setStoreSearchQuery] = useState("");
   const [allStores, setAllStores] = useState([]);
   const [filteredStores, setFilteredStores] = useState([]);
-  const [stats, setStats] = useState({
-    totalProducts: 0,
-    totalStock: 0,
-    lowStockProducts: 0,
-    totalOrders: 0,
-    pendingOrders: 0,
-    deliveredOrders: 0,
-    returnedOrders: 0,
-  });
+  const [stats, setStats] = useState(emptyVendorStats);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadDashboard = async () => {
       if (isVendor()) {
-        await fetchVendorData(isMounted);
+        await fetchVendorStores(isMounted);
       } else {
         await fetchCustomerData(isMounted);
       }
@@ -138,6 +141,18 @@ const Dashboard = () => {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (isVendor() && selectedStoreId) {
+      fetchSelectedStoreData(selectedStoreId, isMounted);
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedStoreId]);
 
   const fetchCustomerData = async (isMounted = true) => {
     try {
@@ -168,61 +183,80 @@ const Dashboard = () => {
     setFilteredStores(filtered);
   };
 
-  const fetchVendorData = async (isMounted = true) => {
+  const fetchVendorStores = async (isMounted = true) => {
     try {
       setLoading(true);
 
       const storesResponse = await storesAPI.getMyStores();
       const storesData = storesResponse.data || storesResponse || [];
 
-      let productsData = [];
-      let allOrdersData = [];
-
-      if (storesData.length > 0) {
-        const productsResponse = await productsAPI.getMyProducts();
-        productsData = productsResponse.data || productsResponse || [];
-
-        const orderRequests = storesData.map(async (store) => {
-          try {
-            const ordersResponse = await ordersAPI.getByStore(store.id);
-            return ordersResponse.data || ordersResponse || [];
-          } catch (error) {
-            console.error(`Failed to fetch orders for store ${store.id}:`, error);
-            return [];
-          }
-        });
-
-        const orderGroups = await Promise.all(orderRequests);
-        allOrdersData = orderGroups.flat();
-      }
-
       if (!isMounted) return;
 
       setStores(storesData);
+
+      if (storesData.length === 0) {
+        setProducts([]);
+        setOrders([]);
+        setStats(emptyVendorStats);
+        setSelectedStoreId("");
+        setLoading(false);
+        return;
+      }
+
+      setSelectedStoreId((currentSelectedStoreId) =>
+        storesData.some((store) => store.id === currentSelectedStoreId)
+          ? currentSelectedStoreId
+          : storesData.at(0)?.id || "",
+      );
+    } catch (error) {
+      console.error("Failed to fetch vendor stores:", error);
+      if (isMounted) setLoading(false);
+    }
+  };
+
+  const fetchSelectedStoreData = async (storeId, isMounted = true) => {
+    try {
+      setLoading(true);
+
+      const [productsResponse, ordersResponse] = await Promise.all([
+        productsAPI.getByStore(storeId),
+        ordersAPI.getByStore(storeId),
+      ]);
+
+      const productsData = productsResponse.data || productsResponse || [];
+      const ordersData = ordersResponse.data || ordersResponse || [];
+
+      if (!isMounted) return;
+
       setProducts(productsData);
-      setOrders(allOrdersData);
+      setOrders(ordersData);
 
       const totalStock = productsData.reduce((sum, p) => sum + (Number(p.stock) || 0), 0);
       const lowStockProducts = productsData.filter((p) => p.stock != null && Number(p.stock) <= 5).length;
 
-      const pendingOrders = allOrdersData.filter((o) => String(o.status).toLowerCase() === "pending").length;
-      const deliveredOrders = allOrdersData.filter((o) => {
+      const pendingOrders = ordersData.filter((o) => String(o.status).toLowerCase() === "pending").length;
+      const deliveredOrders = ordersData.filter((o) => {
         const status = String(o.status).toLowerCase();
         return status === "delivered" || status === "completed";
       }).length;
-      const returnedOrders = allOrdersData.filter((o) => String(o.status).toLowerCase() === "returned").length;
+      const returnedOrders = ordersData.filter((o) => String(o.status).toLowerCase() === "returned").length;
 
       setStats({
         totalProducts: productsData.length,
         totalStock,
         lowStockProducts,
-        totalOrders: allOrdersData.length,
+        totalOrders: ordersData.length,
         pendingOrders,
         deliveredOrders,
         returnedOrders,
       });
     } catch (error) {
-      console.error("Failed to fetch vendor data:", error);
+      console.error("Failed to fetch selected store data:", error);
+      if (isMounted) {
+        setProducts([]);
+        setOrders([]);
+        setStats(emptyVendorStats);
+      }
     } finally {
       if (isMounted) setLoading(false);
     }
@@ -241,7 +275,7 @@ const Dashboard = () => {
 
   if (isVendor()) {
     const hasStore = stores.length > 0;
-    const primaryStore = stores[0];
+    const selectedStore = stores.find((store) => store.id === selectedStoreId) || stores.at(0);
 
     if (!hasStore) {
       return (
@@ -372,7 +406,7 @@ const Dashboard = () => {
             </div>
           </section>
 
-          {primaryStore && (
+          {selectedStore && (
             <section className="mt-8 rounded-[2rem] border border-emerald-950/10 bg-white/85 p-6 shadow-sm backdrop-blur md:p-8">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-center gap-4">
@@ -380,15 +414,32 @@ const Dashboard = () => {
                     <Store className="h-7 w-7" />
                   </div>
                   <div>
-                    <p className="text-sm font-black uppercase tracking-[0.18em] text-emerald-950/50">Primary store</p>
-                    <h2 className="text-2xl font-black text-emerald-950">{primaryStore.name}</h2>
+                    <p className="text-sm font-black uppercase tracking-[0.18em] text-emerald-950/50">Viewing store</p>
+                    <h2 className="text-2xl font-black text-emerald-950">{selectedStore.name}</h2>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {primaryStore.slug && (
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  {stores.length > 1 ? (
+                    <select
+                      value={selectedStoreId}
+                      onChange={(e) => setSelectedStoreId(e.target.value)}
+                      className="rounded-full border border-emerald-950/10 bg-[#f6f1e7] px-5 py-3 font-black text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+                    >
+                      {stores.map((store) => (
+                        <option key={store.id} value={store.id}>
+                          {store.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="rounded-full bg-[#f6f1e7] px-5 py-3 font-black text-emerald-950">
+                      {selectedStore.name}
+                    </span>
+                  )}
+                  {selectedStore.slug && (
                     <Link
-                      to={`/store/${primaryStore.slug}`}
+                      to={`/store/${selectedStore.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-5 py-3 font-black text-emerald-950 transition hover:bg-lime-200"
@@ -410,11 +461,11 @@ const Dashboard = () => {
               <div className="mt-6 grid gap-4 md:grid-cols-3">
                 <div className="rounded-2xl bg-[#f6f1e7] p-5">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-950/50">Store URL</p>
-                  <p className="mt-2 truncate font-black">{primaryStore.slug ? `/store/${primaryStore.slug}` : "Not set"}</p>
+                  <p className="mt-2 truncate font-black">{selectedStore.slug ? `/store/${selectedStore.slug}` : "Not set"}</p>
                 </div>
                 <div className="rounded-2xl bg-[#f6f1e7] p-5">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-950/50">Contact</p>
-                  <p className="mt-2 truncate font-black">{primaryStore.phone || "Not set"}</p>
+                  <p className="mt-2 truncate font-black">{selectedStore.phone || "Not set"}</p>
                 </div>
                 <div className="rounded-2xl bg-[#f6f1e7] p-5">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-950/50">Status</p>
@@ -428,10 +479,10 @@ const Dashboard = () => {
           )}
 
           <section className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard icon={Package} label="Products" value={stats.totalProducts} helper="Products in your seller catalog." href="/my-products" accent="emerald" />
+            <StatCard icon={Package} label="Products" value={stats.totalProducts} helper={`Products in ${selectedStore?.name || "this store"}.`} href="/my-products" accent="emerald" />
             <StatCard icon={Boxes} label="Stock Units" value={stats.totalStock} helper={`Across ${stats.totalProducts} product${stats.totalProducts !== 1 ? "s" : ""}.`} href="/my-products" />
             <StatCard icon={AlertTriangle} label="Low Stock" value={stats.lowStockProducts} helper="Products with 5 or fewer units left." href="/my-products" accent="amber" />
-            <StatCard icon={ShoppingBag} label="Orders" value={stats.totalOrders} helper="Orders across all your stores." href="/my-orders" accent="white" />
+            <StatCard icon={ShoppingBag} label="Orders" value={stats.totalOrders} helper={`Orders for ${selectedStore?.name || "this store"}.`} href="/my-orders" accent="white" />
           </section>
 
           <section className="mt-6 grid gap-5 sm:grid-cols-3">
@@ -459,7 +510,7 @@ const Dashboard = () => {
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-black text-emerald-950">Recent Products</h2>
-                  <p className="mt-1 text-sm font-semibold text-emerald-950/60">Your own products only.</p>
+                  <p className="mt-1 text-sm font-semibold text-emerald-950/60">Products in the selected store only.</p>
                 </div>
                 <Link to="/my-products" className="rounded-full bg-emerald-950 px-4 py-2 text-sm font-black text-white transition hover:bg-emerald-900">
                   View all
@@ -470,7 +521,7 @@ const Dashboard = () => {
                 <EmptyState
                   icon={Package}
                   title="No products yet"
-                  description="Add your first product after setting up your storefront."
+                  description="No products in this store yet."
                   actionLabel="Add Product"
                   actionHref="/my-products"
                 />
@@ -504,7 +555,7 @@ const Dashboard = () => {
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-black text-emerald-950">Recent Orders</h2>
-                  <p className="mt-1 text-sm font-semibold text-emerald-950/60">Orders across your stores.</p>
+                  <p className="mt-1 text-sm font-semibold text-emerald-950/60">Orders for the selected store only.</p>
                 </div>
                 <Link to="/my-orders" className="rounded-full bg-emerald-950 px-4 py-2 text-sm font-black text-white transition hover:bg-emerald-900">
                   View all
@@ -515,9 +566,9 @@ const Dashboard = () => {
                 <EmptyState
                   icon={ShoppingBag}
                   title="No orders yet"
-                  description="Orders will appear here once customers start buying from your store."
+                  description="No orders for this store yet."
                   actionLabel="View Store"
-                  actionHref={primaryStore?.slug ? `/store/${primaryStore.slug}` : "/my-stores"}
+                  actionHref={selectedStore?.slug ? `/store/${selectedStore.slug}` : "/my-stores"}
                 />
               ) : (
                 <div className="space-y-3">

@@ -15,17 +15,14 @@ import {
   Heart,
   ClipboardList,
   LayoutDashboard,
+  BarChart3,
 } from "lucide-react";
 import { productsAPI, notificationsAPI } from "../api/api";
 
 const baseLink =
   "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-black transition hover:bg-white/70";
-
-const activeLink =
-  "bg-white text-emerald-950 shadow-sm";
-
-const inactiveLink =
-  "text-emerald-950/70 hover:text-emerald-950";
+const activeLink = "bg-white text-emerald-950 shadow-sm";
+const inactiveLink = "text-emerald-950/70 hover:text-emerald-950";
 
 const getNavClass = ({ isActive }) =>
   `${baseLink} ${isActive ? activeLink : inactiveLink}`;
@@ -73,7 +70,7 @@ const Navbar = () => {
     }
   };
 
-  const fetchLowStockProducts = async () => {
+  const fetchLowStockProducts = useCallback(async () => {
     try {
       const response = await productsAPI.getMyProducts();
       const products = response.data || response || [];
@@ -86,7 +83,7 @@ const Navbar = () => {
     } catch (error) {
       console.error("Failed to load low stock products:", error);
     }
-  };
+  }, []);
 
   const fetchUnreadNotifications = useCallback(async () => {
     if (!isAuthenticated || !user?.id || vendor) {
@@ -114,7 +111,7 @@ const Navbar = () => {
       setLowStockProducts([]);
       setProductCount(0);
     }
-  }, [vendor, location.pathname]);
+  }, [vendor, location.pathname, fetchLowStockProducts]);
 
   useEffect(() => {
     if (!vendor) return;
@@ -138,7 +135,7 @@ const Navbar = () => {
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [vendor]);
+  }, [vendor, fetchLowStockProducts]);
 
   useEffect(() => {
     if (!isAuthenticated || vendor || !user?.id) {
@@ -170,9 +167,7 @@ const Navbar = () => {
     prevLowStockCount.current = lowStockProducts.length;
   }, [lowStockProducts]);
 
-  const guestLinks = [
-    { label: "Browse Stores", to: "/stores", icon: Building2 },
-  ];
+  const guestLinks = [{ label: "Browse Stores", to: "/stores", icon: Building2 }];
 
   const customerLinks = [
     { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
@@ -187,10 +182,10 @@ const Navbar = () => {
     { label: "My Stores", to: "/my-stores", icon: Store },
     { label: "Products", to: "/my-products", icon: Package },
     { label: "Orders", to: "/my-orders", icon: ClipboardList },
+    { label: "Sales", to: "/sales-analytics", icon: BarChart3 },
   ];
 
   const navLinks = !isAuthenticated ? guestLinks : vendor ? vendorLinks : customerLinks;
-
   const logoTarget = isAuthenticated ? "/dashboard" : "/";
 
   const renderLinks = (mobile = false) =>
@@ -284,12 +279,8 @@ const Navbar = () => {
                             >
                               <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
-                                  <p className="truncate font-black text-emerald-950">
-                                    {product.name}
-                                  </p>
-                                  <p className="text-xs font-semibold text-emerald-950/60">
-                                    Stock: {product.stock}
-                                  </p>
+                                  <p className="truncate font-black text-emerald-950">{product.name}</p>
+                                  <p className="text-xs font-semibold text-emerald-950/60">Stock: {product.stock}</p>
                                 </div>
                                 <span className="rounded-full bg-amber-200 px-2 py-1 text-[11px] font-black uppercase tracking-wider text-emerald-950">
                                   Low
@@ -324,12 +315,8 @@ const Navbar = () => {
                   <User className="h-4 w-4" />
                 </div>
                 <div className="hidden leading-tight xl:block">
-                  <p className="text-sm font-black text-emerald-950">
-                    {user?.firstName || "User"}
-                  </p>
-                  <p className="text-xs font-bold capitalize text-emerald-950/55">
-                    {user?.role}
-                  </p>
+                  <p className="text-sm font-black text-emerald-950">{user?.firstName || "User"}</p>
+                  <p className="text-xs font-bold capitalize text-emerald-950/55">{user?.role}</p>
                 </div>
               </div>
 
@@ -382,12 +369,8 @@ const Navbar = () => {
                       <User className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-black text-emerald-950">
-                        {user?.firstName || "User"}
-                      </p>
-                      <p className="text-sm font-bold capitalize text-emerald-950/55">
-                        {user?.role}
-                      </p>
+                      <p className="font-black text-emerald-950">{user?.firstName || "User"}</p>
+                      <p className="text-sm font-bold capitalize text-emerald-950/55">{user?.role}</p>
                     </div>
                   </div>
 
@@ -404,6 +387,24 @@ const Navbar = () => {
                       {lowStockProducts.length > 0 && (
                         <span className="rounded-full bg-lime-300 px-2 py-1 text-xs font-black">
                           {lowStockProducts.length}
+                        </span>
+                      )}
+                    </Link>
+                  )}
+
+                  {!vendor && (
+                    <Link
+                      to="/notifications"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-between rounded-2xl bg-white/70 px-4 py-3 font-black text-emerald-950"
+                    >
+                      <span className="inline-flex items-center gap-3">
+                        <Bell className="h-5 w-5" />
+                        Notifications
+                      </span>
+                      {unreadNotificationsCount > 0 && (
+                        <span className="rounded-full bg-lime-300 px-2 py-1 text-xs font-black">
+                          {unreadNotificationsCount}
                         </span>
                       )}
                     </Link>

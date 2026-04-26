@@ -26,7 +26,7 @@ export enum PaymentMethod {
   BANK = 'bank',
 }
 
-@Entity('orders')
+@Entity('checkout_orders')
 export class Order {
   @PrimaryGeneratedColumn('uuid')
   id: string;

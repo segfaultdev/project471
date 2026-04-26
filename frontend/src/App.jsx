@@ -1,9 +1,4 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -29,13 +24,13 @@ import BulkImport from "./pages/BulkImport";
 import MyOrders from "./pages/MyOrders";
 import Coupons from "./pages/Coupons";
 import Notifications from "./pages/Notifications";
+import SalesAnalytics from "./pages/SalesAnalytics";
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-
           <Route path="/" element={<Homepage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/shop-login" element={<CustomerLogin />} />
@@ -175,13 +170,23 @@ function App() {
             }
           />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="/sales-analytics"
+            element={
+              <ProtectedRoute requireVendor={true}>
+                <div>
+                  <Navbar />
+                  <SalesAnalytics />
+                </div>
+              </ProtectedRoute>
+            }
+          />
 
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </AuthProvider>
   );
 }
-
 
 export default App;

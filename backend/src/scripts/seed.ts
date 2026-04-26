@@ -5,6 +5,8 @@ import { User, UserRole } from '../users/entities/user.entity';
 import { Store } from '../stores/entities/store.entity';
 import { Product } from '../products/entities/product.entity';
 import { Coupon, DiscountType } from '../coupons/coupon.entity';
+import { Order, OrderStatus } from '../stores/entities/order.entity';
+import { OrderItem } from '../stores/entities/order-item.entity';
 
 function buildDataSource(): DataSource {
   const dbType = (process.env.DB_TYPE || 'sqlite').toLowerCase();
@@ -21,7 +23,7 @@ function buildDataSource(): DataSource {
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
       ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-      entities: [User, Store, Product, Coupon],
+      entities: [User, Store, Product, Coupon, Order, OrderItem],
       synchronize,
       logging,
     });
@@ -30,7 +32,7 @@ function buildDataSource(): DataSource {
   return new DataSource({
     type: 'sqlite',
     database: process.env.SQLITE_PATH || 'database.sqlite',
-    entities: [User, Store, Product, Coupon],
+    entities: [User, Store, Product, Coupon, Order, OrderItem],
     synchronize,
     logging,
   });
@@ -45,6 +47,8 @@ async function seed() {
     const storeRepo = dataSource.getRepository(Store);
     const productRepo = dataSource.getRepository(Product);
     const couponRepo = dataSource.getRepository(Coupon);
+    const orderRepo = dataSource.getRepository(Order);
+    const orderItemRepo = dataSource.getRepository(OrderItem);
 
     const vendorEmail = 'vendor.seed@ecom471.local';
     const customerEmail = 'customer.seed@ecom471.local';
@@ -96,6 +100,31 @@ async function seed() {
       console.log('Created seed store');
     } else {
       console.log('Seed store already exists');
+    }
+
+    const vendorUsers = await userRepo.find({ where: { role: UserRole.VENDOR } });
+    for (const vendorUser of vendorUsers) {
+      const existingVendorStores = await storeRepo.count({
+        where: { ownerId: vendorUser.id },
+      });
+
+      if (existingVendorStores > 0) {
+        continue;
+      }
+
+      const vendorSlug = `seed-${vendorUser.id.slice(0, 8)}`;
+      const vendorStore = storeRepo.create({
+        name: `${vendorUser.firstName || 'Vendor'} Store`,
+        slug: vendorSlug,
+        description: 'Auto-created store for analytics seeding',
+        ownerId: vendorUser.id,
+        email: vendorUser.email,
+        phone: '+10000000000',
+        address: 'Seed Address',
+        isActive: true,
+      });
+      await storeRepo.save(vendorStore);
+      console.log(`Created store for vendor: ${vendorUser.email}`);
     }
 
     const productsToSeed = [
@@ -153,6 +182,107 @@ async function seed() {
       console.log('Created coupon: SEED10');
     } else {
       console.log('Coupon already exists: SEED10');
+    }
+
+    const minimumAnalyticsOrders = 25;
+    const allStores = await storeRepo.find();
+    const cities = ['Dhaka', 'Chittagong', 'Khulna', 'Sylhet', 'Rajshahi'];
+
+    for (const currentStore of allStores) {
+      const existingAnalyticsOrders = await orderRepo.count({
+        where: { storeId: currentStore.id },
+      });
+
+      if (existingAnalyticsOrders >= minimumAnalyticsOrders) {
+        console.log(
+          `Analytics seed orders already satisfy minimum for ${currentStore.slug} (${existingAnalyticsOrders}/${minimumAnalyticsOrders})`,
+        );
+        continue;
+      }
+
+      const ordersToCreate = minimumAnalyticsOrders - existingAnalyticsOrders;
+      let productsForStore = await productRepo.find({
+        where: { storeId: currentStore.id },
+      });
+
+      if (productsForStore.length === 0) {
+        const fallbackProduct = productRepo.create({
+          name: `Analytics Product ${currentStore.name}`,
+          description: 'Auto-created product for analytics seeding',
+          price: 29.99,
+          stock: 100,
+          category: 'General',
+          images: [],
+          storeId: currentStore.id,
+          isAvailable: true,
+        });
+        await productRepo.save(fallbackProduct);
+        productsForStore = [fallbackProduct];
+        console.log(`Created fallback product for store: ${currentStore.slug}`);
+      }
+
+      for (let i = 0; i < ordersToCreate; i++) {
+        const primaryProduct = productsForStore[i % productsForStore.length];
+        const secondaryProduct = productsForStore[(i + 1) % productsForStore.length];
+
+        const primaryQuantity = (i % 3) + 1;
+        const secondaryQuantity = i % 2 === 0 ? 1 : 0;
+
+        const primarySubtotal = Number(primaryProduct.price) * primaryQuantity;
+        const secondarySubtotal = Number(secondaryProduct.price) * secondaryQuantity;
+        const totalAmount = Number((primarySubtotal + secondarySubtotal).toFixed(2));
+
+        let status: OrderStatus;
+        if (i < Math.floor(ordersToCreate * 0.6)) {
+          status = OrderStatus.COMPLETED;
+        } else if (i < Math.floor(ordersToCreate * 0.8)) {
+          status = OrderStatus.RETURNED;
+        } else if (i < Math.floor(ordersToCreate * 0.9)) {
+          status = OrderStatus.PENDING;
+        } else {
+          status = OrderStatus.CANCELLED;
+        }
+
+        const dayOffset = existingAnalyticsOrders + i;
+        const order = orderRepo.create({
+          customerId: customer.id,
+          storeId: currentStore.id,
+          totalAmount,
+          status,
+          shippingCity: cities[dayOffset % cities.length],
+          shippingArea: `Area ${((dayOffset % 7) + 1).toString()}`,
+          shippingAddress: `House ${100 + dayOffset}, Road ${((dayOffset % 15) + 1).toString()}`,
+          createdAt: new Date(Date.now() - dayOffset * 24 * 60 * 60 * 1000),
+        });
+
+        const savedOrder = await orderRepo.save(order);
+
+        const orderItems: OrderItem[] = [
+          orderItemRepo.create({
+            orderId: savedOrder.id,
+            productId: primaryProduct.id,
+            quantity: primaryQuantity,
+            unitPrice: Number(primaryProduct.price),
+            subtotal: Number(primarySubtotal.toFixed(2)),
+          }),
+        ];
+
+        if (secondaryQuantity > 0) {
+          orderItems.push(
+            orderItemRepo.create({
+              orderId: savedOrder.id,
+              productId: secondaryProduct.id,
+              quantity: secondaryQuantity,
+              unitPrice: Number(secondaryProduct.price),
+              subtotal: Number(secondarySubtotal.toFixed(2)),
+            }),
+          );
+        }
+
+        await orderItemRepo.save(orderItems);
+      }
+
+      console.log(`Created ${ordersToCreate} analytics seed orders for store: ${currentStore.slug}`);
     }
 
     console.log('Seeding completed successfully');

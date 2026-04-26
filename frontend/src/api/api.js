@@ -81,27 +81,46 @@ export const productsAPI = {
   delete: (id) => api.delete(`/products/${id}`),
 };
 
-// Orders API
+// Orders API calls (via stores module)
 export const ordersAPI = {
-  create: (orderData) => api.post("/orders", orderData),
-  getAll: () => api.get("/orders"),
-  getOne: (id) => api.get(`/orders/${id}`),
-  getByStore: (storeId) => api.get(`/orders/store/${storeId}`),
-  updateStatus: (id, data) => api.patch(`/orders/${id}/status`, data),
+  create: (orderData) => api.post("/stores/orders", orderData),
+  getAll: () => api.get("/stores/orders"),
+  getOne: (id) => api.get(`/stores/orders/${id}`),
+  getByStore: (storeId) => api.get(`/stores/${storeId}/orders`),
+  getMyOrders: (storeId) => api.get(`/stores/${storeId}/orders`),
+  updateStatus: (id, statusOrPayload) => {
+    const payload =
+      typeof statusOrPayload === "string"
+        ? { status: statusOrPayload }
+        : statusOrPayload;
+    return api.patch(`/stores/orders/${id}/status`, payload);
+  },
+
+  // Sales Analytics
+  getDailySales: (storeId, date) =>
+    api.get(`/stores/${storeId}/orders/stats/daily?date=${date}`),
+  getBestSellers: (storeId) =>
+    api.get(`/stores/${storeId}/orders/stats/best-sellers`),
+  getReturnRate: (storeId) =>
+    api.get(`/stores/${storeId}/orders/stats/return-rate`),
+  getStoreStats: (storeId) =>
+    api.get(`/stores/${storeId}/orders/stats/store`),
+  getOrdersByLocation: (storeId) =>
+    api.get(`/stores/${storeId}/orders/stats/location`),
 };
 
 // Coupons API
 export const couponsAPI = {
-  getAll: () => api.get('/coupons'),
+  getAll: () => api.get("/coupons"),
   getByStore: (storeId) => api.get(`/coupons/store/${storeId}`),
-  create: (data) => api.post('/coupons', data),
+  create: (data) => api.post("/coupons", data),
   update: (id, data) => api.patch(`/coupons/${id}`, data),
   delete: (id) => api.delete(`/coupons/${id}`),
 };
 
 // Notifications API
 export const notificationsAPI = {
-  getAll: () => api.get('/notifications'),
+  getAll: () => api.get("/notifications"),
   getByBuyer: (buyerId) => api.get(`/notifications/buyer/${buyerId}`),
   markAsRead: (id) => api.patch(`/notifications/${id}/read`),
   delete: (id) => api.delete(`/notifications/${id}`),

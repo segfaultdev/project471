@@ -23,7 +23,7 @@ export class Notification {
   message: string;
 
   @Column({
-    type: 'enum',
+    type: 'simple-enum',
     enum: NotificationType,
     default: NotificationType.GENERAL,
   })

@@ -20,7 +20,7 @@ export class Coupon {
   code: string;
 
   @Column({
-    type: 'enum',
+    type: 'simple-enum',
     enum: DiscountType,
     default: DiscountType.PERCENTAGE,
   })
@@ -35,7 +35,7 @@ export class Coupon {
   @Column({ default: true })
   isActive: boolean;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'datetime', nullable: true })
   expiresAt: Date;
 
   @CreateDateColumn()

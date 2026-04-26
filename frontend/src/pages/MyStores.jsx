@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { storesAPI } from "../api/api";
+import { importAPI, storesAPI } from "../api/api";
 import {
   ArrowRight,
   Building2,
@@ -37,6 +37,11 @@ const emptyStoreForm = {
   socialLink: "",
   logo: "",
   banner: "",
+};
+
+const getApiErrorMessage = (err, fallbackMessage) => {
+  const message = err.response?.data?.message || err.response?.data;
+  return typeof message === "string" ? message : fallbackMessage;
 };
 
 const resizeImageToLimit = (file, limit) =>
@@ -102,6 +107,7 @@ const MyStores = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [storeImporting, setStoreImporting] = useState(false);
 
   useEffect(() => {
     fetchMyStores();
@@ -130,6 +136,7 @@ const MyStores = () => {
     setLogoPreview(null);
     setBannerPreview(null);
     setError("");
+    setStoreImporting(false);
   };
 
   const openCreateForm = () => {
@@ -196,15 +203,46 @@ const MyStores = () => {
     }
   };
 
-  const handleSocialImportMock = () => {
+  const handleSocialImport = async () => {
     if (!formData.socialLink.trim()) {
       setError("Paste a Facebook or Instagram page link first.");
       return;
     }
 
-    setSuccess("Social import placeholder ready. Connect your backend importer here.");
-    setError("");
-    setTimeout(() => setSuccess(""), 3000);
+    try {
+      setStoreImporting(true);
+      setError("");
+      setSuccess("");
+
+      const response = await importAPI.importSocialStore(formData.socialLink);
+      const importedStore = response.data;
+
+      setFormData((current) => ({
+        ...current,
+        name: importedStore.name || "",
+        description: importedStore.description || "",
+        category: importedStore.category || "",
+        logo: importedStore.logo || "",
+        banner: importedStore.banner || "",
+        phone: importedStore.phone || "",
+        email: importedStore.email || "",
+        address: importedStore.address || "",
+        socialLink: importedStore.socialLink || current.socialLink,
+      }));
+      setLogoPreview(importedStore.logo || null);
+      setBannerPreview(importedStore.banner || null);
+      setSuccess("Demo store info imported. Review and edit before saving.");
+      setTimeout(() => setSuccess(""), 3500);
+    } catch (err) {
+      setError(
+        getApiErrorMessage(
+          err,
+          "Unable to import demo store info. Please try a demo link.",
+        ),
+      );
+    } finally {
+      setStoreImporting(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -231,7 +269,7 @@ const MyStores = () => {
       await fetchMyStores();
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to save store.");
+      setError(getApiErrorMessage(err, "Failed to save store."));
     }
   };
 
@@ -374,16 +412,26 @@ const MyStores = () => {
                     />
                   </div>
                   <p className="mt-2 text-sm font-semibold text-emerald-950/55">
-                    MVP note: this field prepares the flow. Connect auto-fill backend later.
+                    Imports public demo info from predefined backend data only. No live social scraping or platform APIs.
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={handleSocialImportMock}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-950 px-6 py-3.5 font-black text-white transition hover:-translate-y-1 hover:shadow-xl"
+                  onClick={handleSocialImport}
+                  disabled={storeImporting}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-950 px-6 py-3.5 font-black text-white transition hover:-translate-y-1 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <Instagram className="h-5 w-5" />
-                  Import Info
+                  {storeImporting ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Instagram className="h-5 w-5" />
+                      Import Store Info
+                    </>
+                  )}
                 </button>
               </div>
             </div>

@@ -81,7 +81,13 @@ export const productsAPI = {
   delete: (id) => api.delete(`/products/${id}`),
 };
 
-// Orders API calls (via stores module)
+// Demo social import API calls
+export const importAPI = {
+  importSocialStore: (url) => api.post("/api/import/social-store", { url }),
+  importSocialProduct: (url) => api.post("/api/import/social-product", { url }),
+};
+
+// Orders API calls
 export const ordersAPI = {
   create: (orderData) => api.post("/stores/orders", orderData),
   getAll: () => api.get("/stores/orders"),

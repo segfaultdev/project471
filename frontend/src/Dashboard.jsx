@@ -24,6 +24,7 @@ const Dashboard = () => {
   const { user, isVendor } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stores, setStores] = useState([]);
+  const [selectedStoreId, setSelectedStoreId] = useState("");
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [storeSearchQuery, setStoreSearchQuery] = useState("");
@@ -68,30 +69,37 @@ const Dashboard = () => {
     setFilteredStores(filtered);
   };
 
-  const fetchVendorData = async () => {
+  const fetchVendorData = async (storeId = "") => {
     try {
       setLoading(true);
-      const [storesResponse, productsResponse] = await Promise.all([
-        storesAPI.getMyStores(),
-        productsAPI.getMyProducts(),
-      ]);
+      const storesResponse = await storesAPI.getMyStores();
 
       const storesData = storesResponse.data || storesResponse;
-      const productsData = productsResponse.data || productsResponse;
+      const nextSelectedStoreId =
+        storeId ||
+        (storesData.some((store) => store.id === selectedStoreId)
+          ? selectedStoreId
+          : storesData.at(0)?.id || "");
 
       setStores(storesData);
-      setProducts(productsData);
+      setSelectedStoreId(nextSelectedStoreId);
 
-      // Fetch orders for the first store if available
+      let productsData = [];
       let ordersData = [];
-      if (storesData.length > 0) {
+
+      if (nextSelectedStoreId) {
+        const productsResponse = await productsAPI.getByStore(nextSelectedStoreId);
+        productsData = productsResponse.data || productsResponse;
+
         try {
-          const ordersResponse = await ordersAPI.getByStore(storesData[0].id);
+          const ordersResponse = await ordersAPI.getByStore(nextSelectedStoreId);
           ordersData = ordersResponse.data || ordersResponse;
         } catch (error) {
           console.error("Failed to fetch orders:", error);
         }
       }
+
+      setProducts(productsData);
       setOrders(ordersData);
 
       // Calculate stats
@@ -132,7 +140,7 @@ const Dashboard = () => {
       );
     }
 
-    const primaryStore = stores[0];
+    const selectedStore = stores.find((store) => store.id === selectedStoreId) || stores.at(0);
 
     return (
       <div className="min-h-screen bg-slate-50">
@@ -176,20 +184,35 @@ const Dashboard = () => {
           </div>
 
           {/* Store Info Section */}
-          {primaryStore && (
+          {selectedStore && (
             <section className="mb-8 rounded-2xl bg-white p-8 border border-slate-200 shadow-md">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white">
-                  <Store className="h-6 w-6" />
+              <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white">
+                    <Store className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900">
+                      Viewing store: {selectedStore.name}
+                    </h2>
+                    <p className="text-sm text-slate-600">
+                      Dashboard stats are scoped to this store
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">
-                    Your Store Information
-                  </h2>
-                  <p className="text-sm text-slate-600">
-                    Manage your store details and settings
-                  </p>
-                </div>
+                {stores.length > 1 && (
+                  <select
+                    value={selectedStoreId}
+                    onChange={(e) => fetchVendorData(e.target.value)}
+                    className="rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-900"
+                  >
+                    {stores.map((store) => (
+                      <option key={store.id} value={store.id}>
+                        {store.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <div className="rounded-xl p-5 border border-slate-200 shadow-sm transition-all duration-200 hover:shadow-md">
@@ -197,21 +220,21 @@ const Dashboard = () => {
                     Store Name
                   </p>
                   <p className="text-lg font-semibold text-slate-900 truncate">
-                    {primaryStore.name}
+                    {selectedStore.name}
                   </p>
                 </div>
                 <div className="rounded-xl p-5 border border-slate-200 shadow-sm transition-all duration-200 hover:shadow-md">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                     Store URL
                   </p>
-                  {primaryStore.slug ? (
+                  {selectedStore.slug ? (
                     <Link
-                      to={`/store/${primaryStore.slug}`}
+                      to={`/store/${selectedStore.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1 transition"
                     >
-                      <span className="truncate">/{primaryStore.slug}</span>
+                      <span className="truncate">/{selectedStore.slug}</span>
                       <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
                     </Link>
                   ) : (
@@ -225,7 +248,7 @@ const Dashboard = () => {
                     Contact
                   </p>
                   <p className="text-sm font-semibold text-slate-900">
-                    {primaryStore.phone || "Not set"}
+                    {selectedStore.phone || "Not set"}
                   </p>
                 </div>
                 <div className="rounded-xl p-5 border border-slate-200 shadow-sm transition-all duration-200 hover:shadow-md">

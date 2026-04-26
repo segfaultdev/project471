@@ -21,6 +21,7 @@ import { StoresModule } from './stores/stores.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { SocialImportModule } from './social-import/social-import.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -79,6 +80,7 @@ import { CouponsModule } from './coupons/coupons.module';
     ReviewsModule, // Product reviews and ratings
     NotificationsModule, // Buyer notifications
     CouponsModule, // Seller coupon management
+    SocialImportModule, // Controlled demo Facebook/Instagram import lookups
   ],
 
   controllers: [AppController], // Root controller

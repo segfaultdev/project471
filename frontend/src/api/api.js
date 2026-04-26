@@ -80,6 +80,25 @@ export const productsAPI = {
   update: (id, productData) => api.patch(`/products/${id}`, productData),
   delete: (id) => api.delete(`/products/${id}`),
 };
+
+// Orders API
+export const ordersAPI = {
+  create: (orderData) => api.post("/orders", orderData),
+  getAll: () => api.get("/orders"),
+  getOne: (id) => api.get(`/orders/${id}`),
+  getByStore: (storeId) => api.get(`/orders/store/${storeId}`),
+  updateStatus: (id, data) => api.patch(`/orders/${id}/status`, data),
+};
+
+// Coupons API
+export const couponsAPI = {
+  getAll: () => api.get('/coupons'),
+  getByStore: (storeId) => api.get(`/coupons/store/${storeId}`),
+  create: (data) => api.post('/coupons', data),
+  update: (id, data) => api.patch(`/coupons/${id}`, data),
+  delete: (id) => api.delete(`/coupons/${id}`),
+};
+
 // Notifications API
 export const notificationsAPI = {
   getAll: () => api.get('/notifications'),
@@ -87,4 +106,5 @@ export const notificationsAPI = {
   markAsRead: (id) => api.patch(`/notifications/${id}/read`),
   delete: (id) => api.delete(`/notifications/${id}`),
 };
+
 export default api;

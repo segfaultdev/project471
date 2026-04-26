@@ -11,10 +11,17 @@ import MyProducts from './pages/MyProducts';
 import Products from './pages/Products';
 import Stores from './pages/Stores';
 import StoreDetail from './pages/StoreDetail';
+import ProductDetail from './pages/ProductDetail';
+import Cart from './pages/Cart';
+import Wishlist from './pages/Wishlist';
+import Checkout from './pages/Checkout';
+import CheckoutSuccess from './pages/CheckoutSuccess';
+import Notifications from './pages/Notifications';
+import MyOrders from './pages/MyOrders';
 import Sell from './pages/Sell';
 import ImportProduct from './pages/ImportProduct';
 import BulkImport from './pages/BulkImport';
-import Notifications from './pages/Notifications';
+import Coupons from './pages/Coupons';
 
 function App() {
   return (
@@ -103,6 +110,17 @@ function App() {
             }
           />
           <Route
+            path="/coupons"
+            element={
+              <ProtectedRoute requireVendor={true}>
+                <div>
+                  <Navbar />
+                  <Coupons />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/import-product"
             element={
               <ProtectedRoute requireVendor={true}>
@@ -141,8 +159,5 @@ function App() {
   );
 }
 
-<<<<<<< HEAD
+
 export default App;
-=======
-export default App;
->>>>>>> origin/add-buyer-notifications

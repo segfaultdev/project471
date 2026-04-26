@@ -22,6 +22,8 @@ import { OrdersModule } from './orders/orders.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { NotificationsModule } from './notifications/notifications.module';
+import { CouponsModule } from './coupons/coupons.module';
+
 @Module({
   imports: [
     // ConfigModule - Loads environment variables from .env file
@@ -39,20 +41,13 @@ import { NotificationsModule } from './notifications/notifications.module';
       logging: true, // Log queries
     }),
 
-    // Feature Modules
-<<<<<<< HEAD
     UsersModule, // User management (CRUD operations)
     AuthModule, // Authentication (login, register, JWT)
     StoresModule, // Store/Vendor management (CRUD operations)
     ProductsModule, // Product catalog (CRUD operations)
     OrdersModule, // Order management (CRUD operations)
-=======
-    UsersModule,     // User management (CRUD operations)
-    AuthModule,      // Authentication (login, register, JWT)
-    StoresModule,    // Store/Vendor management (CRUD operations)
-    ProductsModule,  // Product catalog (CRUD operations)
-    NotificationsModule,
->>>>>>> origin/add-buyer-notifications
+    NotificationsModule, // Buyer notifications
+    CouponsModule, // Seller coupon management
   ],
 
   controllers: [AppController], // Root controller

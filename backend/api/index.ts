@@ -1,10 +1,15 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
+import { ExpressAdapter } from '@nestjs/platform-express';
+import express from 'express';
 import { json, urlencoded } from 'express';
-import { AppModule } from './app.module';
+import { AppModule } from '../src/app.module';
+
+const server = express();
+let isBootstrapped = false;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
 
   const envOrigins = [
     process.env.FRONTEND_URL,
@@ -30,20 +35,21 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-
       forbidNonWhitelisted: true,
-
       transform: true,
     }),
   );
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
-  await app.listen(process.env.PORT ?? 3000);
-
-  console.log(
-    `Application is running on: http://localhost:${process.env.PORT ?? 3000}`,
-  );
+  await app.init();
+  isBootstrapped = true;
 }
 
-bootstrap();
+export default async function handler(req, res) {
+  if (!isBootstrapped) {
+    await bootstrap();
+  }
+
+  return server(req, res);
+}

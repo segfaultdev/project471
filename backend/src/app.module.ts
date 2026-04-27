@@ -42,7 +42,8 @@ import { CouponsModule } from './coupons/coupons.module';
             (configService.get<string>('DB_SSL') || 'false') === 'true'
               ? { rejectUnauthorized: false }
               : false,
-          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          entities: [],
+          autoLoadEntities: true,
           synchronize,
           logging,
         };

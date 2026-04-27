@@ -52,6 +52,11 @@ export class Store {
   @Column({ nullable: true })
   socialLink: string;
 
+  @Column({ type: 'decimal', precision: 3, scale: 2, default: 0 })
+  rating: number;
+
+  @Column({ type: 'int', default: 3 })
+  deliveryDays: number;
   @Column({ default: true })
   isActive: boolean;
 

@@ -60,6 +60,16 @@ export class ProductsController {
   }
 
   @Public()
+  @Get('compare/:productId')
+  async compareSimilarProducts(@Param('productId') productId: string) {
+    const product = await this.productsService.findOne(productId);
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+    return this.productsService.findSimilarProducts(product.name, productId);
+  }
+
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);

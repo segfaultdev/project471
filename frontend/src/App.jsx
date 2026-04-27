@@ -12,6 +12,7 @@ import MyStores from "./pages/MyStores";
 import MyProducts from "./pages/MyProducts";
 import Stores from "./pages/Stores";
 import StoreDetail from "./pages/StoreDetail";
+import ProductComparison from "./pages/ProductComparison";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
@@ -82,6 +83,17 @@ function App() {
                 <div>
                   <Navbar />
                   <Dashboard />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compare/:productId"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <Navbar />
+                  <ProductComparison />
                 </div>
               </ProtectedRoute>
             }

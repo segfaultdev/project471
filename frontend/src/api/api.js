@@ -69,6 +69,7 @@ export const productsAPI = {
   getByStore: (storeId) => api.get(`/products/store/${storeId}`),
   getByCategory: (category) => api.get(`/products/category/${category}`),
   getMyProducts: () => api.get("/products/my-products"),
+  getSimilarProducts: (productId) => api.get(`/products/compare/${productId}`),
   create: (productData) => api.post("/products", productData),
   update: (id, productData) => api.patch(`/products/${id}`, productData),
   delete: (id) => api.delete(`/products/${id}`),

@@ -1,39 +1,152 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { storesAPI } from '../api/api';
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { importAPI, storesAPI } from "../api/api";
+import {
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  ExternalLink,
+  ImagePlus,
+  Instagram,
+  Link2,
+  Loader2,
+  Mail,
+  MapPin,
+  Phone,
+  Sparkles,
+  Store,
+  Trash2,
+  UploadCloud,
+  X,
+} from "lucide-react";
+
+const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024;
+
+const IMAGE_DIMENSION_LIMITS = {
+  logo: { label: "Logo", maxWidth: 512, maxHeight: 512 },
+  banner: { label: "Banner", maxWidth: 1200, maxHeight: 400 },
+};
+
+const emptyStoreForm = {
+  name: "",
+  description: "",
+  category: "",
+  address: "",
+  phone: "",
+  email: "",
+  socialLink: "",
+  logo: "",
+  banner: "",
+};
+
+const getApiErrorMessage = (err, fallbackMessage) => {
+  const message = err.response?.data?.message || err.response?.data;
+  return typeof message === "string" ? message : fallbackMessage;
+};
+
+const resizeImageToLimit = (file, limit) =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      const scale = Math.min(
+        limit.maxWidth / image.naturalWidth,
+        limit.maxHeight / image.naturalHeight,
+        1,
+      );
+      const width = Math.max(1, Math.round(image.naturalWidth * scale));
+      const height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const context = canvas.getContext("2d");
+
+      if (!context) {
+        reject(new Error("Unable to process image."));
+        return;
+      }
+
+      context.drawImage(image, 0, 0, width, height);
+
+      const outputType = file.type === "image/png" ? "image/png" : "image/jpeg";
+      const dataUrl =
+        outputType === "image/jpeg"
+          ? canvas.toDataURL(outputType, 0.86)
+          : canvas.toDataURL(outputType);
+
+      resolve(dataUrl);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Unable to read image."));
+    };
+
+    image.src = objectUrl;
+  });
+
+const getStoreUrl = (store) => {
+  if (!store?.slug) return "Not generated yet";
+  const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+  return `${baseUrl}/store/${store.slug}`;
+};
 
 const MyStores = () => {
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingStore, setEditingStore] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    address: '',
-    phone: '',
-    email: '',
-    logo: '',
-    banner: '',
-  });
+  const [formData, setFormData] = useState(emptyStoreForm);
   const [logoPreview, setLogoPreview] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [storeImporting, setStoreImporting] = useState(false);
 
   useEffect(() => {
     fetchMyStores();
   }, []);
 
+  const normalizeArrayResponse = (response) => response?.data || response || [];
+
   const fetchMyStores = async () => {
     try {
+      setLoading(true);
+      setError("");
       const response = await storesAPI.getMyStores();
-      setStores(response.data);
+      setStores(normalizeArrayResponse(response));
     } catch (err) {
-      setError('Failed to load stores');
+      setError("Failed to load stores.");
       console.error(err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setShowForm(false);
+    setEditingStore(null);
+    setFormData(emptyStoreForm);
+    setLogoPreview(null);
+    setBannerPreview(null);
+    setError("");
+    setStoreImporting(false);
+  };
+
+  const openCreateForm = () => {
+    setEditingStore(null);
+    setFormData(emptyStoreForm);
+    setLogoPreview(null);
+    setBannerPreview(null);
+    setShowForm(true);
+    setError("");
+    setSuccess("");
   };
 
   const handleChange = (e) => {
@@ -43,204 +156,337 @@ const MyStores = () => {
     });
   };
 
-  const handleFileChange = (e, fieldName) => {
+  const handleFileChange = async (e, fieldName) => {
     const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setError('Please select a valid image file');
-        return;
-      }
-      
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Image size should be less than 5MB');
-        return;
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please select a valid image file.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      setError("Image size should be less than 5MB.");
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      const limit = IMAGE_DIMENSION_LIMITS[fieldName];
+      const base64String = limit
+        ? await resizeImageToLimit(file, limit)
+        : await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error("Unable to read image."));
+            reader.readAsDataURL(file);
+          });
+
+      setError("");
+      setFormData((currentFormData) => ({
+        ...currentFormData,
+        [fieldName]: base64String,
+      }));
+
+      if (fieldName === "logo") {
+        setLogoPreview(base64String);
       }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result;
-        setFormData({
-          ...formData,
-          [fieldName]: base64String,
-        });
-        
-        if (fieldName === 'logo') {
-          setLogoPreview(base64String);
-        } else if (fieldName === 'banner') {
-          setBannerPreview(base64String);
-        }
-      };
-      reader.readAsDataURL(file);
+      if (fieldName === "banner") {
+        setBannerPreview(base64String);
+      }
+    } catch (err) {
+      setError(err.message);
+      e.target.value = "";
+    }
+  };
+
+  const handleSocialImport = async () => {
+    if (!formData.socialLink.trim()) {
+      setError("Paste a Facebook or Instagram page link first.");
+      return;
+    }
+
+    try {
+      setStoreImporting(true);
+      setError("");
+      setSuccess("");
+
+      const response = await importAPI.importSocialStore(formData.socialLink);
+      const importedStore = response.data;
+
+      setFormData((current) => ({
+        ...current,
+        name: importedStore.name || "",
+        description: importedStore.description || "",
+        category: importedStore.category || "",
+        logo: importedStore.logo || "",
+        banner: importedStore.banner || "",
+        phone: importedStore.phone || "",
+        email: importedStore.email || "",
+        address: importedStore.address || "",
+        socialLink: importedStore.socialLink || current.socialLink,
+      }));
+      setLogoPreview(importedStore.logo || null);
+      setBannerPreview(importedStore.banner || null);
+      setSuccess("Demo store info imported. Review and edit before saving.");
+      setTimeout(() => setSuccess(""), 3500);
+    } catch (err) {
+      setError(
+        getApiErrorMessage(
+          err,
+          "Unable to import demo store info. Please try a demo link.",
+        ),
+      );
+    } finally {
+      setStoreImporting(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
+    setSuccess("");
 
     try {
+      const payload = {
+        ...formData,
+      };
+
       if (editingStore) {
-        await storesAPI.update(editingStore.id, formData);
+        await storesAPI.update(editingStore.id, payload);
+        setSuccess("Store updated successfully.");
       } else {
-        await storesAPI.create(formData);
+        await storesAPI.create(payload);
+        setSuccess("Store created successfully. You can now add products.");
       }
-      
-      setShowForm(false);
-      setEditingStore(null);
-      setFormData({ name: '', description: '', address: '', phone: '', email: '', logo: '', banner: '' });
-      setLogoPreview(null);
-      setBannerPreview(null);
-      fetchMyStores();
+
+      resetForm();
+      await fetchMyStores();
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save store');
+      setError(getApiErrorMessage(err, "Failed to save store."));
     }
   };
 
   const handleEdit = (store) => {
     setEditingStore(store);
     setFormData({
-      name: store.name,
-      description: store.description || '',
-      address: store.address || '',
-      phone: store.phone || '',
-      email: store.email || '',
-      logo: store.logo || '',
-      banner: store.banner || '',
+      name: store.name || "",
+      description: store.description || "",
+      category: store.category || "",
+      address: store.address || "",
+      phone: store.phone || "",
+      email: store.email || "",
+      socialLink: store.socialLink || "",
+      logo: store.logo || "",
+      banner: store.banner || "",
     });
     setLogoPreview(store.logo || null);
     setBannerPreview(store.banner || null);
     setShowForm(true);
+    setError("");
+    setSuccess("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this store?')) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
 
     try {
-      await storesAPI.delete(id);
-      fetchMyStores();
+      await storesAPI.delete(deleteTarget.id);
+      setDeleteTarget(null);
+      setSuccess("Store deleted successfully.");
+      await fetchMyStores();
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete store');
+      setError(err.response?.data?.message || "Failed to delete store.");
+      setDeleteTarget(null);
     }
-  };
-
-  const handleCancel = () => {
-    setShowForm(false);
-    setEditingStore(null);
-    setFormData({ name: '', description: '', address: '', phone: '', email: '', logo: '', banner: '' });
-    setLogoPreview(null);
-    setBannerPreview(null);
-    setError('');
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#f6f1e7]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 text-lg">Loading your stores...</p>
+          <Loader2 className="mx-auto h-10 w-10 animate-spin text-emerald-950" />
+          <p className="mt-4 font-black text-emerald-950">Loading your stores...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-slate-900">My Stores</h1>
-            <p className="text-slate-600 mt-2">Manage your store locations and information</p>
-          </div>
-          {!showForm && (
-            <button
-              onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create Store
-            </button>
-          )}
-        </div>
+    <main className="min-h-screen bg-[#f6f1e7] text-emerald-950">
+      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+        <section className="relative overflow-hidden rounded-[2.5rem] bg-emerald-950 p-8 text-white shadow-[0_30px_100px_rgba(8,28,21,0.2)] md:p-10">
+          <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-lime-300/20 blur-3xl" />
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-lime-300 px-4 py-2 text-sm font-black text-emerald-950">
+                <Sparkles className="h-4 w-4" />
+                Store Management
+              </div>
+              <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] sm:text-5xl">
+                My Stores
+              </h1>
+              <p className="mt-3 max-w-2xl text-lg leading-8 text-white/70">
+                Create storefronts, add branding, choose categories, and manage your public store links.
+              </p>
+            </div>
 
-        {error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 mb-6">
-            <p className="text-red-700">{error}</p>
+            {!showForm && (
+              <button
+                onClick={openCreateForm}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-lime-300 px-6 py-3.5 font-black text-emerald-950 transition hover:-translate-y-1 hover:bg-lime-200"
+              >
+                <Store className="h-5 w-5" />
+                Create Store
+              </button>
+            )}
+          </div>
+        </section>
+
+        {(error || success) && (
+          <div className="mt-6 space-y-3">
+            {error && (
+              <div className="flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">
+                <p className="font-semibold">{error}</p>
+                <button onClick={() => setError("")} className="rounded-full p-1 hover:bg-red-100">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            {success && (
+              <div className="flex items-center justify-between rounded-2xl border border-lime-300 bg-lime-100 p-4 text-emerald-950">
+                <p className="font-black">{success}</p>
+                <button onClick={() => setSuccess("")} className="rounded-full p-1 hover:bg-lime-200">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
         )}
 
         {showForm && (
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 mb-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
+          <section className="mt-8 rounded-[2.5rem] border border-emerald-950/10 bg-white/85 p-6 shadow-sm backdrop-blur md:p-8">
+            <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">
-                  {editingStore ? 'Edit Store Details' : 'Create Your Store'}
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-emerald-950/50">
+                  {editingStore ? "Edit store" : "New storefront"}
+                </p>
+                <h2 className="mt-2 text-3xl font-black tracking-tight text-emerald-950">
+                  {editingStore ? "Update store details" : "Create your Shoplinker store"}
                 </h2>
-                <p className="text-sm text-slate-600 mt-1">Fill in the information below to set up your store</p>
+              </div>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-950/10 px-5 py-3 font-black text-emerald-950 transition hover:bg-[#f6f1e7]"
+              >
+                <X className="h-5 w-5" />
+                Close
+              </button>
+            </div>
+
+            <div className="mb-8 rounded-[2rem] bg-[#f6f1e7] p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
+                <div className="flex-1">
+                  <label htmlFor="socialLink" className="mb-2 block text-sm font-black text-emerald-950">
+                    Import business profile from Facebook/Instagram
+                  </label>
+                  <div className="relative">
+                    <Link2 className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-950/45" />
+                    <input
+                      type="url"
+                      id="socialLink"
+                      name="socialLink"
+                      value={formData.socialLink}
+                      onChange={handleChange}
+                      className="w-full rounded-2xl border border-emerald-950/10 bg-white px-12 py-3 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+                      placeholder="Paste Facebook or Instagram page link"
+                    />
+                  </div>
+                  <p className="mt-2 text-sm font-semibold text-emerald-950/55">
+                    Imports public demo info from predefined backend data only. No live social scraping or platform APIs.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSocialImport}
+                  disabled={storeImporting}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-950 px-6 py-3.5 font-black text-white transition hover:-translate-y-1 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {storeImporting ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Instagram className="h-5 w-5" />
+                      Import Store Info
+                    </>
+                  )}
+                </button>
               </div>
             </div>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information */}
+
+            <form onSubmit={handleSubmit} className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="space-y-5">
-                <h3 className="text-base font-bold text-slate-700 flex items-center gap-2 pb-2 border-b border-slate-200">
-                  <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Basic Information
-                </h3>
-              <div>
-                <label htmlFor="name" className="block text-sm font-semibold text-slate-900 mb-2">
-                  Store Name *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                  placeholder="Enter store name"
-                />
-              </div>
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <label htmlFor="name" className="mb-2 block text-sm font-black text-emerald-950">
+                      Store Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-4 py-3 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+                      placeholder="Nusrat Fashion House"
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="description" className="block text-sm font-semibold text-slate-900 mb-2">
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows="4"
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 resize-none"
-                  placeholder="Describe your store..."
-                />
-              </div>
-              </div>
+                  <div>
+                    <label htmlFor="category" className="mb-2 block text-sm font-black text-emerald-950">
+                      Store Category *
+                    </label>
+                    <input
+                      type="text"
+                      id="category"
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-4 py-3 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+                      placeholder="Fashion, Gadgets, Beauty..."
+                    />
+                  </div>
+                </div>
 
-              {/* Contact Information */}
-              <div className="space-y-5">
-                <h3 className="text-base font-bold text-slate-700 flex items-center gap-2 pb-2 border-b border-slate-200">
-                  <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  Contact Information
-                </h3>
-
-              <div className="grid md:grid-cols-2 gap-5">
                 <div>
-                  <label htmlFor="address" className="block text-sm font-semibold text-slate-900 mb-2">
+                  <label htmlFor="description" className="mb-2 block text-sm font-black text-emerald-950">
+                    Bio / Description
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    rows="5"
+                    className="w-full resize-none rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-4 py-3 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+                    placeholder="Tell buyers what your store sells..."
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="address" className="mb-2 block text-sm font-black text-emerald-950">
                     Address
                   </label>
                   <input
@@ -249,302 +495,303 @@ const MyStores = () => {
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-4 py-3 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
                     placeholder="Store address"
                   />
                 </div>
 
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-semibold text-slate-900 mb-2">
-                    Phone
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                    placeholder="+1 (234) 567-8900"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-slate-900 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                  placeholder="store@example.com"
-                />
-              </div>
-              </div>
-
-              {/* Store Images Section */}
-              <div className="border-t border-slate-100 pt-6 mt-6">
-                <h3 className="text-lg font-bold text-slate-900 mb-4">Store Images</h3>
-                
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Logo Upload */}
-                  <div className="space-y-3">
-                    <label className="block text-sm font-semibold text-slate-900">
-                      Store Logo
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <label htmlFor="phone" className="mb-2 block text-sm font-black text-emerald-950">
+                      Phone
                     </label>
-                    <div className="flex flex-col items-center">
-                      {logoPreview && (
-                        <div className="mb-4 relative group">
-                          <img 
-                            src={logoPreview} 
-                            alt="Logo preview" 
-                            className="h-32 w-32 object-cover rounded-2xl border-2 border-slate-200"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setLogoPreview(null);
-                              setFormData({ ...formData, logo: '' });
-                            }}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                          >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-                      <label className="w-full cursor-pointer">
-                        <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-2xl p-6 hover:border-blue-500 hover:bg-blue-50 transition-all">
-                          <svg className="h-12 w-12 text-slate-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-sm font-medium text-slate-600">Upload Logo</span>
-                          <span className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB</span>
-                        </div>
-                        <input
-                          type="file"
-                          id="logo"
-                          accept="image/*"
-                          onChange={(e) => handleFileChange(e, 'logo')}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="w-full rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-4 py-3 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+                      placeholder="+880..."
+                    />
                   </div>
 
-                  {/* Banner Upload */}
-                  <div className="space-y-3">
-                    <label className="block text-sm font-semibold text-slate-900">
-                      Store Banner
+                  <div>
+                    <label htmlFor="email" className="mb-2 block text-sm font-black text-emerald-950">
+                      Email
                     </label>
-                    <div className="flex flex-col items-center">
-                      {bannerPreview && (
-                        <div className="mb-4 relative group w-full">
-                          <img 
-                            src={bannerPreview} 
-                            alt="Banner preview" 
-                            className="h-32 w-full object-cover rounded-2xl border-2 border-slate-200"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setBannerPreview(null);
-                              setFormData({ ...formData, banner: '' });
-                            }}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                          >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-                      <label className="w-full cursor-pointer">
-                        <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-2xl p-6 hover:border-blue-500 hover:bg-blue-50 transition-all">
-                          <svg className="h-12 w-12 text-slate-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-sm font-medium text-slate-600">Upload Banner</span>
-                          <span className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB (1200x400 recommended)</span>
-                        </div>
-                        <input
-                          type="file"
-                          id="banner"
-                          accept="image/*"
-                          onChange={(e) => handleFileChange(e, 'banner')}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-4 py-3 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+                      placeholder="store@example.com"
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Form Actions */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <button
-                  type="submit"
-                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-700"
-                >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {editingStore ? 'Update Store' : 'Create Store'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 px-8 py-4 font-semibold text-slate-700 transition hover:bg-slate-50 hover:border-slate-300"
-                >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Cancel
-                </button>
+              <div className="space-y-5">
+                <div className="rounded-[2rem] bg-[#f6f1e7] p-5">
+                  <h3 className="font-black text-emerald-950">Store Logo</h3>
+                  <p className="mt-1 text-sm font-semibold text-emerald-950/55">
+                    Square logo, max 512px after resize.
+                  </p>
+
+                  {logoPreview ? (
+                    <div className="relative mx-auto mt-5 h-36 w-36 overflow-hidden rounded-[2rem] border border-emerald-950/10 bg-white">
+                      <img src={logoPreview} alt="Logo preview" className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLogoPreview(null);
+                          setFormData({ ...formData, logo: "" });
+                        }}
+                        className="absolute right-2 top-2 rounded-full bg-red-500 p-2 text-white shadow-lg transition hover:bg-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-emerald-950/20 bg-white/70 p-8 text-center transition hover:border-lime-300 hover:bg-white">
+                      <ImagePlus className="h-12 w-12 text-emerald-950/40" />
+                      <span className="mt-3 font-black text-emerald-950">Upload Logo</span>
+                      <span className="text-sm font-semibold text-emerald-950/50">PNG/JPG up to 5MB</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(e, "logo")}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+
+                <div className="rounded-[2rem] bg-[#f6f1e7] p-5">
+                  <h3 className="font-black text-emerald-950">Store Banner</h3>
+                  <p className="mt-1 text-sm font-semibold text-emerald-950/55">
+                    Wide banner, max 1200x400 after resize.
+                  </p>
+
+                  {bannerPreview ? (
+                    <div className="relative mt-5 overflow-hidden rounded-[2rem] border border-emerald-950/10 bg-white">
+                      <img src={bannerPreview} alt="Banner preview" className="h-40 w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBannerPreview(null);
+                          setFormData({ ...formData, banner: "" });
+                        }}
+                        className="absolute right-3 top-3 rounded-full bg-red-500 p-2 text-white shadow-lg transition hover:bg-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-emerald-950/20 bg-white/70 p-8 text-center transition hover:border-lime-300 hover:bg-white">
+                      <UploadCloud className="h-12 w-12 text-emerald-950/40" />
+                      <span className="mt-3 font-black text-emerald-950">Upload Banner</span>
+                      <span className="text-sm font-semibold text-emerald-950/50">PNG/JPG up to 5MB</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(e, "banner")}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="submit"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-950 px-8 py-4 font-black text-white transition hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    <CheckCircle2 className="h-5 w-5" />
+                    {editingStore ? "Update Store" : "Create Store"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="inline-flex items-center justify-center rounded-full border border-emerald-950/10 px-8 py-4 font-black text-emerald-950 transition hover:bg-white"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </form>
-          </div>
+          </section>
         )}
 
         {stores.length === 0 ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center">
-            <div className="text-6xl mb-4">🏪</div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">No Stores Yet</h3>
-            <p className="text-slate-600 mb-6">Create your first store to start selling!</p>
+          <section className="mt-8 rounded-[2.5rem] border border-emerald-950/10 bg-white/85 p-12 text-center shadow-sm">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-lime-300 text-emerald-950">
+              <Store className="h-10 w-10" />
+            </div>
+            <h3 className="mt-6 text-2xl font-black text-emerald-950">
+              No stores yet
+            </h3>
+            <p className="mx-auto mt-3 max-w-xl font-semibold leading-7 text-emerald-950/60">
+              Create your first storefront with a store name, category, logo, banner, and contact details.
+            </p>
             {!showForm && (
               <button
-                onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-700"
+                onClick={openCreateForm}
+                className="mt-7 inline-flex items-center gap-2 rounded-full bg-emerald-950 px-7 py-4 font-black text-white transition hover:-translate-y-1 hover:shadow-xl"
               >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
                 Create Your First Store
+                <ArrowRight className="h-5 w-5" />
               </button>
             )}
-          </div>
+          </section>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {stores.map((store) => (
-              <div
+              <article
                 key={store.id}
-                className="rounded-3xl border border-slate-200 bg-white overflow-hidden transition hover:border-slate-300"
+                className="group overflow-hidden rounded-[2rem] border border-emerald-950/10 bg-white/90 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_70px_rgba(8,28,21,0.2)]"
               >
-                {/* Banner/Cover Image */}
-                <div className="h-32 w-full bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden flex items-center justify-center">
+                <div className="relative h-44 overflow-hidden bg-gradient-to-br from-emerald-100 via-lime-100 to-amber-100">
                   {store.banner ? (
-                    <img 
-                      src={store.banner} 
+                    <img
+                      src={store.banner}
                       alt={`${store.name} banner`}
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.parentElement.innerHTML = '<svg class="h-16 w-16 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>';
-                      }}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
                   ) : (
-                    <svg className="h-16 w-16 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                  )}
-                </div>
-                
-                <div className="p-6">
-                  {/* Logo and Header */}
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-start gap-3 flex-1">
-                      <div className="h-14 w-14 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                        {store.logo ? (
-                          <img 
-                            src={store.logo} 
-                            alt={`${store.name} logo`}
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.parentElement.innerHTML = '<svg class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>';
-                            }}
-                          />
-                        ) : (
-                          <svg className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-xl font-bold text-slate-900 truncate">{store.name}</h3>
-                        {store.slug && (
-                          <Link
-                            to={`/store/${store.slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:text-blue-700 mt-1 inline-flex items-center gap-1 transition"
-                          >
-                            {import.meta.env.VITE_APP_URL}/store/{store.slug}
-                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </Link>
-                        )}
-                      </div>
+                    <div className="flex h-full w-full items-center justify-center text-emerald-950/35">
+                      <Building2 className="h-20 w-20" />
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${
-                      store.isActive 
-                        ? 'bg-green-50 text-green-700' 
-                        : 'bg-slate-100 text-slate-700'
-                    }`}>
-                      {store.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                  )}
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/45 via-transparent to-transparent" />
+
+                  <span className={`absolute right-4 top-4 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-black ${
+                    store.isActive
+                      ? "bg-lime-300 text-emerald-950"
+                      : "bg-white/90 text-emerald-950"
+                  }`}>
+                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                    {store.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+
+                <div className="relative p-6">
+                  <div className="-mt-16 mb-5 flex items-end gap-4">
+                    <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[1.5rem] border-[5px] border-white bg-emerald-950 text-lime-300 shadow-[0_10px_30px_rgba(8,28,21,0.25)]">
+                      {store.logo ? (
+                        <img src={store.logo} alt={`${store.name} logo`} className="h-full w-full object-cover" />
+                      ) : (
+                        <Store className="h-9 w-9" />
+                      )}
+                    </div>
+                    <div className="min-w-0 pb-1.5">
+                      <h3 className="truncate text-2xl font-black tracking-tight text-emerald-950">
+                        {store.name}
+                      </h3>
+                      <p className="mt-1 inline-flex rounded-full bg-[#f6f1e7] px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-emerald-950/70">
+                        {store.category || "Uncategorized"}
+                      </p>
+                    </div>
                   </div>
 
-                <p className="text-slate-600 mb-4 line-clamp-3">{store.description || 'No description'}</p>
+                  <p className="line-clamp-3 min-h-[84px] text-[15px] font-semibold leading-7 text-emerald-950/65">
+                    {store.description || "No description added yet."}
+                  </p>
 
-                <div className="space-y-2 mb-6 text-sm">
-                  {store.address && (
-                    <div className="flex items-center text-slate-600">
-                      <span className="mr-2">📍</span>
-                      <span className="truncate">{store.address}</span>
-                    </div>
-                  )}
-                  {store.phone && (
-                    <div className="flex items-center text-slate-600">
-                      <span className="mr-2">📞</span>
-                      <span>{store.phone}</span>
-                    </div>
-                  )}
-                  {store.email && (
-                    <div className="flex items-center text-slate-600">
-                      <span className="mr-2">✉️</span>
-                      <span className="truncate">{store.email}</span>
-                    </div>
-                  )}
-                </div>
+                  <div className="mt-5 rounded-[1.25rem] border border-emerald-950/10 bg-[#f6f1e7] p-4">
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-950/45">
+                      Store URL
+                    </p>
+                    {store.slug ? (
+                      <Link
+                        to={`/store/${store.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex max-w-full items-center gap-2 truncate text-sm font-black text-emerald-950 transition hover:text-emerald-700"
+                      >
+                        <span className="truncate">{getStoreUrl(store)}</span>
+                        <ExternalLink className="h-4 w-4 shrink-0" />
+                      </Link>
+                    ) : (
+                      <p className="mt-2 font-black text-emerald-950/50">Not generated yet</p>
+                    )}
+                  </div>
 
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => handleEdit(store)}
-                    className="flex-1 rounded-2xl bg-blue-50 text-blue-600 py-2 px-4 font-semibold hover:bg-blue-100 transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(store.id)}
-                    className="flex-1 rounded-2xl bg-red-50 text-red-600 py-2 px-4 font-semibold hover:bg-red-100 transition-colors"
-                  >
-                    Delete
-                  </button>
+                  <div className="mt-5 space-y-2.5 text-sm font-semibold text-emerald-950/70">
+                    {store.address && (
+                      <div className="flex items-center gap-2 rounded-xl bg-[#f6f1e7] px-3 py-2">
+                        <MapPin className="h-4 w-4 shrink-0 text-emerald-950" />
+                        <span className="truncate">{store.address}</span>
+                      </div>
+                    )}
+                    {store.phone && (
+                      <div className="flex items-center gap-2 rounded-xl bg-[#f6f1e7] px-3 py-2">
+                        <Phone className="h-4 w-4 shrink-0 text-emerald-950" />
+                        <span>{store.phone}</span>
+                      </div>
+                    )}
+                    {store.email && (
+                      <div className="flex items-center gap-2 rounded-xl bg-[#f6f1e7] px-3 py-2">
+                        <Mail className="h-4 w-4 shrink-0 text-emerald-950" />
+                        <span className="truncate">{store.email}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6 grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => handleEdit(store)}
+                      className="rounded-full bg-lime-300 px-4 py-3 font-black text-emerald-950 transition hover:bg-lime-200"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(store)}
+                      className="rounded-full bg-red-100 px-4 py-3 font-black text-red-700 transition hover:bg-red-200"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-                </div>
-              </div>
+              </article>
             ))}
+          </section>
+        )}
+
+        {deleteTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-emerald-950/50 px-5 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 text-red-700">
+                <Trash2 className="h-7 w-7" />
+              </div>
+              <h2 className="mt-5 text-2xl font-black text-emerald-950">
+                Delete this store?
+              </h2>
+              <p className="mt-3 font-semibold leading-7 text-emerald-950/60">
+                You are about to delete <strong>{deleteTarget.name}</strong>. This can affect products and orders connected to this store.
+              </p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  className="rounded-full border border-emerald-950/10 px-5 py-3 font-black text-emerald-950 transition hover:bg-[#f6f1e7]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="rounded-full bg-red-600 px-5 py-3 font-black text-white transition hover:bg-red-700"
+                >
+                  Delete Store
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 };
 

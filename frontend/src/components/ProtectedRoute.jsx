@@ -1,23 +1,16 @@
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-const ProtectedRoute = ({ children, requireVendor = false }) => {
-  const { isAuthenticated, isVendor, loading } = useAuth();
+const ProtectedRoute = ({ children, requireVendor = false, loginPath = "/login" }) => {
+  const { user, isAuthenticated, isVendor, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-slate-600 text-lg">Loading...</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  if (!isAuthenticated || !user) {
+    return <Navigate to={loginPath} state={{ from: location.pathname }} replace />;
   }
 
   if (requireVendor && !isVendor()) {

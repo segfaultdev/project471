@@ -65,7 +65,7 @@ const Stores = () => {
                 to={store.slug ? `/store/${store.slug}` : '#'}
                 className="group rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-md transition-all duration-200 hover:border-slate-300 hover:shadow-lg block"
               >
-                {/* Banner/Cover Image */}
+                
                 <div className="h-32 w-full bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden flex items-center justify-center">
                   {store.banner ? (
                     <img 

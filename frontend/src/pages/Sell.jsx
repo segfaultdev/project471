@@ -29,10 +29,10 @@ const Sell = () => {
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      {/* Hero Section */}
+      
       <section className="bg-gradient-to-b from-blue-50 to-white">
         <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">
-          {/* Header */}
+          
           <header className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
               <img src="/shoplinker.svg" alt="Shoplinker" className="h-10 w-auto" />
@@ -54,7 +54,7 @@ const Sell = () => {
             </div>
           </header>
 
-          {/* Hero Content */}
+          
           <div className="grid items-center gap-12 py-16 lg:grid-cols-2 lg:py-24">
             <div>
               <span className="inline-flex rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700">
@@ -84,7 +84,7 @@ const Sell = () => {
               </div>
             </div>
 
-            {/* Steps Card */}
+            
             <div className="rounded-[32px] border border-slate-100 bg-white p-6 shadow-xl">
               <div className="rounded-[28px] bg-slate-50 p-6">
                 <div className="rounded-3xl bg-white p-6 shadow-sm">
@@ -106,7 +106,7 @@ const Sell = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      
       <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
@@ -136,7 +136,7 @@ const Sell = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
+      
       <section className="bg-slate-50 py-20">
         <div className="mx-auto max-w-5xl px-6 lg:px-8">
           <div className="rounded-[32px] bg-white p-8 md:p-12 shadow-sm">
@@ -165,7 +165,7 @@ const Sell = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      
       <section className="bg-white py-20">
         <div className="mx-auto max-w-5xl px-6 text-center lg:px-8">
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
@@ -183,7 +183,7 @@ const Sell = () => {
         </div>
       </section>
 
-      {/* Footer */}
+      
       <footer className="border-t border-slate-100 bg-slate-50 py-12">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">

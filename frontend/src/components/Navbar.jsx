@@ -16,6 +16,7 @@ import {
   ClipboardList,
   LayoutDashboard,
   BarChart3,
+  Tag,
 } from "lucide-react";
 import { productsAPI, notificationsAPI } from "../api/api";
 
@@ -182,6 +183,7 @@ const Navbar = () => {
     { label: "My Stores", to: "/my-stores", icon: Store },
     { label: "Products", to: "/my-products", icon: Package },
     { label: "Orders", to: "/my-orders", icon: ClipboardList },
+    { label: "Coupons", to: "/coupons", icon: Tag },
     { label: "Sales", to: "/sales-analytics", icon: BarChart3 },
   ];
 

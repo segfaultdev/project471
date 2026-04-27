@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { OrderItem } from './order-item.entity';
 import { User } from '../../users/entities/user.entity';
 import { Store } from './store.entity';
@@ -31,6 +39,12 @@ export class Order {
 
   @Column('decimal', { precision: 10, scale: 2 })
   totalAmount: number;
+
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  discountAmount: number;
+
+  @Column({ nullable: true })
+  couponCode: string;
 
   @Column({
     type: 'enum',

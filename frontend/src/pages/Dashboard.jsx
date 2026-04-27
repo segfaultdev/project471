@@ -501,6 +501,7 @@ const Dashboard = () => {
               <ActionCard title="Add Product" description="Create a product with image, price, stock, and description." href="/my-products" icon={Plus} primary />
               <ActionCard title="Manage Inventory" description="Update quantities and fix low-stock products before buyers order." href="/my-products" icon={Boxes} />
               <ActionCard title="Manage Orders" description="Update order statuses from Pending to Delivered or Returned." href="/my-orders" icon={ClipboardList} />
+              <ActionCard title="Coupons" description="Create store coupons that customers can apply from their cart." href="/coupons" icon={Tag} />
               <ActionCard title="Bulk Import" description="Import store/product data after your store is already set up." href="/bulk-import" icon={FileSpreadsheet} />
             </div>
           </section>
@@ -670,6 +671,7 @@ const Dashboard = () => {
 
         <section className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           <ActionCard title="Browse Stores" description="Discover local sellers and visit their storefronts to shop products." href="/stores" icon={Building2} primary />
+          <ActionCard title="Followed Stores" description="View the stores you follow and unfollow sellers when your list is full." href="/followed-stores" icon={Heart} />
           <ActionCard title="Wishlist" description="Save products from store pages that you want to buy later." href="/wishlist" icon={Heart} />
           <ActionCard title="My Orders" description="Track purchases, delivery status, and returns." href="/customer-orders" icon={ClipboardList} />
         </section>

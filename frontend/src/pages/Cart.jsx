@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { productsAPI } from "../api/api";
+import { couponsAPI, productsAPI } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import {
   Loader2,
@@ -24,6 +24,11 @@ const Cart = () => {
   const [missingItems, setMissingItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponMessage, setCouponMessage] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
 
   useEffect(() => {
     loadCart();
@@ -73,6 +78,15 @@ const Cart = () => {
 
       setCartItems(validProducts);
       setMissingItems(missingProductIds);
+
+      const storedCoupon = JSON.parse(localStorage.getItem("cartCoupon") || "null");
+      const storeId = validProducts[0]?.store?.id;
+      if (storedCoupon?.storeId && storedCoupon.storeId === storeId) {
+        setAppliedCoupon(storedCoupon);
+        setCouponCode(storedCoupon.code || "");
+      } else {
+        localStorage.removeItem("cartCoupon");
+      }
 
       if (missingProductIds.length > 0) {
         localStorage.setItem(
@@ -134,10 +148,26 @@ const Cart = () => {
   const clearCart = () => {
     setCartItems([]);
     localStorage.setItem("cart", JSON.stringify([]));
+    localStorage.removeItem("cartCoupon");
+    setAppliedCoupon(null);
+    setCouponCode("");
   };
 
   const getSubtotal = () =>
     cartItems.reduce((total, item) => total + Number(item.price || 0) * Number(item.quantity || 1), 0);
+
+  const getDiscountAmount = () => {
+    if (!appliedCoupon) return 0;
+
+    const subtotal = getSubtotal();
+    const value = Number(appliedCoupon.discountValue || 0);
+    const discount =
+      appliedCoupon.discountType === "percentage"
+        ? subtotal * (value / 100)
+        : value;
+
+    return Math.min(subtotal, Math.max(0, discount));
+  };
 
   const getTotalItems = () =>
     cartItems.reduce((total, item) => total + Number(item.quantity || 1), 0);
@@ -171,6 +201,58 @@ const Cart = () => {
     }
 
     navigate("/checkout");
+  };
+
+  const applyCoupon = async () => {
+    setCouponError("");
+    setCouponMessage("");
+
+    if (!couponCode.trim()) {
+      setCouponError("Enter a coupon code.");
+      return;
+    }
+
+    if (!canCheckout) {
+      setCouponError("Coupons can be used only when your cart has products from one store.");
+      return;
+    }
+
+    const storeId = cartItems[0]?.store?.id;
+    if (!storeId) {
+      setCouponError("Store information is missing.");
+      return;
+    }
+
+    try {
+      setCouponLoading(true);
+      const response = await couponsAPI.getByStoreAndCode(storeId, couponCode.trim());
+      const coupon = response.data || response;
+      const normalizedCoupon = {
+        id: coupon.id,
+        code: coupon.code,
+        discountType: coupon.discountType,
+        discountValue: Number(coupon.discountValue),
+        storeId: coupon.storeId,
+      };
+      setAppliedCoupon(normalizedCoupon);
+      localStorage.setItem("cartCoupon", JSON.stringify(normalizedCoupon));
+      setCouponMessage(`${coupon.code} applied.`);
+    } catch (err) {
+      const msg = err.response?.data?.message;
+      setAppliedCoupon(null);
+      localStorage.removeItem("cartCoupon");
+      setCouponError(Array.isArray(msg) ? msg.join(" · ") : msg || "Invalid coupon for this store.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponMessage("");
+    setCouponError("");
+    localStorage.removeItem("cartCoupon");
   };
 
   const firstStoreSlug =
@@ -397,12 +479,54 @@ const Cart = () => {
                     <span className="text-neutral-600">Shipping</span>
                     <span className="font-semibold">Calculated at checkout</span>
                   </div>
+                  {appliedCoupon && (
+                    <div className="flex justify-between gap-4 text-green-700">
+                      <span>Coupon ({appliedCoupon.code})</span>
+                      <span className="font-semibold">-{formatCurrency(getDiscountAmount())}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+                  <label className="text-sm font-bold text-neutral-700">Coupon code</label>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(event) => setCouponCode(event.target.value.toUpperCase())}
+                      placeholder="SAVE10"
+                      className="min-w-0 flex-1 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold outline-none focus:border-neutral-950"
+                      disabled={couponLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={applyCoupon}
+                      disabled={couponLoading || !canCheckout}
+                      className="rounded-full bg-neutral-950 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {couponLoading ? "..." : "Apply"}
+                    </button>
+                  </div>
+                  {appliedCoupon && (
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="mt-2 text-xs font-bold text-red-600"
+                    >
+                      Remove coupon
+                    </button>
+                  )}
+                  {(couponMessage || couponError) && (
+                    <p className={`mt-2 text-xs font-semibold ${couponError ? "text-red-700" : "text-green-700"}`}>
+                      {couponError || couponMessage}
+                    </p>
+                  )}
                 </div>
 
                 <div className="mt-6 border-t border-neutral-200 pt-5">
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
-                    <span>{formatCurrency(getSubtotal())}</span>
+                    <span>{formatCurrency(getSubtotal() - getDiscountAmount())}</span>
                   </div>
                   <p className="mt-2 text-xs leading-5 text-neutral-500">
                     Taxes and delivery fees are confirmed during checkout.

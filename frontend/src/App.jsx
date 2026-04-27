@@ -16,6 +16,7 @@ import ProductComparison from "./pages/ProductComparison";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
+import FollowedStores from "./pages/FollowedStores";
 import StoreWishlist from "./pages/StoreWishlist";
 import Checkout from "./pages/Checkout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
@@ -46,6 +47,18 @@ function App() {
           <Route path="/shop-wishlist" element={<StoreWishlist />} />
 
           <Route path="/products" element={<Navigate to="/stores" replace />} />
+
+          <Route
+            path="/followed-stores"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <Navbar />
+                  <FollowedStores />
+                </div>
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/wishlist"

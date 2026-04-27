@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Request, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  Request,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { StoresService } from './stores.service';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
@@ -31,6 +43,24 @@ export class StoresController {
   @Get('my-stores')
   findMyStores(@Request() req) {
     return this.storesService.findByOwner(req.user.id);
+  }
+
+  @Roles(UserRole.CUSTOMER)
+  @Get('follows/my')
+  findMyFollowedStores(@Request() req) {
+    return this.storesService.findFollowSummary(req.user.id);
+  }
+
+  @Roles(UserRole.CUSTOMER)
+  @Post(':id/follow')
+  followStore(@Request() req, @Param('id') id: string) {
+    return this.storesService.followStore(req.user.id, id);
+  }
+
+  @Roles(UserRole.CUSTOMER)
+  @Delete(':id/follow')
+  unfollowStore(@Request() req, @Param('id') id: string) {
+    return this.storesService.unfollowStore(req.user.id, id);
   }
 
   @Public()
@@ -85,9 +115,11 @@ export class StoresController {
     return this.storesService.remove(id);
   }
 
-
   @Post('orders')
-  createOrder(@Body() createOrderDto: CreateOrderDto, @CurrentUser() user: any) {
+  createOrder(
+    @Body() createOrderDto: CreateOrderDto,
+    @CurrentUser() user: any,
+  ) {
     return this.storesService.createOrder(createOrderDto, user?.id);
   }
 
@@ -127,7 +159,9 @@ export class StoresController {
     @Param('storeId') storeId: string,
     @Query('date') date: string,
   ) {
-    const [year, month, day] = (date || '').split('-').map((value) => parseInt(value, 10));
+    const [year, month, day] = (date || '')
+      .split('-')
+      .map((value) => parseInt(value, 10));
     const parsedDate =
       Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)
         ? new Date(year, month - 1, day)
@@ -137,9 +171,7 @@ export class StoresController {
   }
 
   @Get(':storeId/orders/stats/best-sellers')
-  getBestSellingProducts(
-    @Param('storeId') storeId: string,
-  ) {
+  getBestSellingProducts(@Param('storeId') storeId: string) {
     return this.storesService.getBestSellingProducts(storeId);
   }
 

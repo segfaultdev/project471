@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { storesAPI, productsAPI } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -22,10 +22,14 @@ const formatCurrency = (amount) => `৳${Number(amount || 0).toLocaleString("en-
 const StoreDetail = () => {
   const { slug } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [store, setStore] = useState(null);
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [followedStoreIds, setFollowedStoreIds] = useState([]);
+  const [maxFollowedStores, setMaxFollowedStores] = useState(5);
+  const [followLoading, setFollowLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -36,6 +40,15 @@ const StoreDetail = () => {
       fetchStoreData();
     }
   }, [slug]);
+
+  useEffect(() => {
+    if (user?.role === "customer") {
+      fetchFollowedStores();
+      return;
+    }
+
+    setFollowedStoreIds([]);
+  }, [user?.id, user?.role]);
 
   useEffect(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -85,6 +98,53 @@ const StoreDetail = () => {
   const showNotice = (message) => {
     setNotice(message);
     setTimeout(() => setNotice(""), 2500);
+  };
+
+  const fetchFollowedStores = async () => {
+    try {
+      const response = await storesAPI.getMyFollowedStores();
+      const followData = response.data || response || {};
+      setFollowedStoreIds(followData.followedStoreIds || []);
+      setMaxFollowedStores(followData.maxFollowedStores || 5);
+    } catch (err) {
+      console.error("Failed to load followed stores:", err);
+    }
+  };
+
+  const handleToggleFollow = async () => {
+    if (!user) {
+      navigate("/shop-login", { state: { from: location.pathname } });
+      return;
+    }
+
+    if (user.role !== "customer") {
+      showNotice("Only customer accounts can follow stores.");
+      return;
+    }
+
+    if (!store?.id || followLoading) {
+      return;
+    }
+
+    try {
+      setFollowLoading(true);
+      const response = followedStoreIds.includes(store.id)
+        ? await storesAPI.unfollow(store.id)
+        : await storesAPI.follow(store.id);
+      const followData = response.data || response || {};
+
+      setFollowedStoreIds(followData.followedStoreIds || []);
+      setMaxFollowedStores(followData.maxFollowedStores || maxFollowedStores);
+      showNotice(
+        followedStoreIds.includes(store.id)
+          ? `Unfollowed ${store.name}.`
+          : `You are now following ${store.name}.`,
+      );
+    } catch (err) {
+      showNotice(err.response?.data?.message || "Could not update followed stores.");
+    } finally {
+      setFollowLoading(false);
+    }
   };
 
   const addToCart = (product) => {
@@ -155,6 +215,13 @@ const StoreDetail = () => {
       </main>
     );
   }
+
+  const isFollowingStore = followedStoreIds.includes(store.id);
+  const followButtonLabel = !user
+    ? "Sign in to Follow"
+    : isFollowingStore
+      ? "Following"
+      : "Follow Store";
 
   return (
     <main className="min-h-screen bg-[#faf8f3] text-neutral-950">
@@ -258,6 +325,23 @@ const StoreDetail = () => {
                     >
                       Shop Products
                     </a>
+                    <button
+                      type="button"
+                      onClick={handleToggleFollow}
+                      disabled={followLoading}
+                      className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                        isFollowingStore
+                          ? "border border-neutral-950 bg-white text-neutral-950 hover:bg-neutral-100"
+                          : "border border-neutral-200 bg-white text-neutral-800 hover:border-neutral-950"
+                      }`}
+                    >
+                      {followLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Heart className={`h-4 w-4 ${isFollowingStore ? "fill-current" : ""}`} />
+                      )}
+                      {followButtonLabel}
+                    </button>
                     <Link
                       to="/cart"
                       state={{ fromStore: `/store/${store.slug}` }}
@@ -273,6 +357,11 @@ const StoreDetail = () => {
                 <p className="text-sm font-bold uppercase tracking-[0.18em] text-neutral-500">
                   Store Info
                 </p>
+                {user?.role === "customer" && (
+                  <p className="mt-2 text-sm font-semibold text-neutral-600">
+                    Following {followedStoreIds.length}/{maxFollowedStores} stores
+                  </p>
+                )}
 
                 <div className="mt-4 space-y-3 text-sm text-neutral-700">
                   {store.address && (

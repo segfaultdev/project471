@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { productsAPI, ordersAPI } from "../api/api";
+import { couponsAPI, productsAPI, ordersAPI } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import {
   Loader2,
@@ -47,6 +47,7 @@ const Checkout = () => {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
 
   // firstName, lastName, email pre-filled from the logged-in user (read-only)
   // phone, address, city, postalCode entered manually
@@ -117,6 +118,29 @@ const Checkout = () => {
 
       setStore(validProducts[0].store);
       setCartItems(validProducts);
+
+      const storedCoupon = JSON.parse(localStorage.getItem("cartCoupon") || "null");
+      if (storedCoupon?.storeId === validProducts[0].store.id) {
+        try {
+          const couponResponse = await couponsAPI.getByStoreAndCode(
+            validProducts[0].store.id,
+            storedCoupon.code,
+          );
+          const coupon = couponResponse.data || couponResponse;
+          setAppliedCoupon({
+            id: coupon.id,
+            code: coupon.code,
+            discountType: coupon.discountType,
+            discountValue: Number(coupon.discountValue),
+            storeId: coupon.storeId,
+          });
+        } catch {
+          localStorage.removeItem("cartCoupon");
+          setAppliedCoupon(null);
+        }
+      } else {
+        localStorage.removeItem("cartCoupon");
+      }
     } catch (err) {
       console.error("Failed to load cart:", err);
       setError("Failed to load checkout. Please try again.");
@@ -142,7 +166,20 @@ const Checkout = () => {
 
   const getTax = () => getSubtotal() * 0.15;
 
-  const getTotal = () => getSubtotal() + getShipping() + getTax();
+  const getDiscountAmount = () => {
+    if (!appliedCoupon) return 0;
+
+    const subtotal = getSubtotal();
+    const value = Number(appliedCoupon.discountValue || 0);
+    const discount =
+      appliedCoupon.discountType === "percentage"
+        ? subtotal * (value / 100)
+        : value;
+
+    return Math.min(subtotal, Math.max(0, discount));
+  };
+
+  const getTotal = () => getSubtotal() - getDiscountAmount() + getShipping() + getTax();
 
   const validateForm = () => {
     const requiredFields = [
@@ -198,6 +235,8 @@ const Checkout = () => {
           image: item.images?.[0] || item.image || "",
         })),
         subtotal: getSubtotal(),
+        discount: getDiscountAmount(),
+        couponCode: appliedCoupon?.code || null,
         shipping: getShipping(),
         tax: getTax(),
         total: getTotal(),
@@ -207,6 +246,7 @@ const Checkout = () => {
       await ordersAPI.create(orderData);
 
       localStorage.removeItem("cart");
+      localStorage.removeItem("cartCoupon");
       navigate("/checkout/success");
     } catch (err) {
       console.error("Checkout failed:", err);
@@ -523,6 +563,12 @@ const Checkout = () => {
                   <span className="text-neutral-600">Tax (15%)</span>
                   <span className="font-semibold">{formatCurrency(getTax())}</span>
                 </div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-green-700">
+                    <span>Coupon ({appliedCoupon.code})</span>
+                    <span className="font-semibold">-{formatCurrency(getDiscountAmount())}</span>
+                  </div>
+                )}
                 <div className="flex justify-between border-t border-neutral-200 pt-4 text-lg font-bold">
                   <span>Total</span>
                   <span>{formatCurrency(getTotal())}</span>

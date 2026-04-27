@@ -1,25 +1,37 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Store } from './entities/store.entity';
+import { StoreFollow } from './entities/store-follow.entity';
 import { Product } from '../products/entities/product.entity';
 import { Order, OrderStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class StoresService {
+  private readonly maxFollowedStores = 5;
+
   constructor(
     @InjectRepository(Store)
     private storesRepository: Repository<Store>,
+    @InjectRepository(StoreFollow)
+    private storeFollowsRepository: Repository<StoreFollow>,
     @InjectRepository(Product)
     private productsRepository: Repository<Product>,
     @InjectRepository(Order)
     private ordersRepository: Repository<Order>,
     @InjectRepository(OrderItem)
     private orderItemsRepository: Repository<OrderItem>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private generateSlug(name: string): string {
@@ -31,7 +43,10 @@ export class StoresService {
       .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
   }
 
-  private async ensureUniqueSlug(baseSlug: string, excludeId?: string): Promise<string> {
+  private async ensureUniqueSlug(
+    baseSlug: string,
+    excludeId?: string,
+  ): Promise<string> {
     let slug = baseSlug;
     let counter = 1;
 
@@ -64,9 +79,9 @@ export class StoresService {
     const stores = await this.storesRepository.find({
       relations: ['owner'], // Include owner information
     });
-    
+
     await this.generateMissingSlugs(stores);
-    
+
     return stores;
   }
 
@@ -100,13 +115,103 @@ export class StoresService {
       where: { ownerId },
       relations: ['owner'],
     });
-    
+
     await this.generateMissingSlugs(stores);
-    
+
     return stores;
   }
 
-  async update(id: string, updateStoreDto: UpdateStoreDto): Promise<Store | null> {
+  async findFollowedStores(customerId: string): Promise<Store[]> {
+    const follows = await this.storeFollowsRepository.find({
+      where: { customerId },
+      relations: ['store', 'store.owner'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return follows.map((follow) => follow.store).filter(Boolean);
+  }
+
+  async findFollowSummary(customerId: string): Promise<{
+    maxFollowedStores: number;
+    followedStoreIds: string[];
+    stores: Store[];
+  }> {
+    const stores = await this.findFollowedStores(customerId);
+
+    return {
+      maxFollowedStores: this.maxFollowedStores,
+      followedStoreIds: stores.map((store) => store.id),
+      stores,
+    };
+  }
+
+  async findFollowerIds(storeId: string): Promise<string[]> {
+    const follows = await this.storeFollowsRepository.find({
+      where: { storeId },
+      select: ['customerId'],
+    });
+
+    return Array.from(new Set(follows.map((follow) => follow.customerId)));
+  }
+
+  async followStore(
+    customerId: string,
+    storeId: string,
+  ): Promise<{
+    maxFollowedStores: number;
+    followedStoreIds: string[];
+    stores: Store[];
+  }> {
+    const store = await this.storesRepository.findOne({
+      where: { id: storeId },
+    });
+    if (!store) {
+      throw new NotFoundException('Store not found');
+    }
+
+    const existingFollow = await this.storeFollowsRepository.findOne({
+      where: { customerId, storeId },
+    });
+    if (existingFollow) {
+      return this.findFollowSummary(customerId);
+    }
+
+    const followedStoreCount = await this.storeFollowsRepository.count({
+      where: { customerId },
+    });
+    if (followedStoreCount >= this.maxFollowedStores) {
+      throw new BadRequestException(
+        `Customers can follow at most ${this.maxFollowedStores} stores`,
+      );
+    }
+
+    try {
+      await this.storeFollowsRepository.save(
+        this.storeFollowsRepository.create({ customerId, storeId }),
+      );
+    } catch {
+      throw new ConflictException('Unable to follow this store');
+    }
+
+    return this.findFollowSummary(customerId);
+  }
+
+  async unfollowStore(
+    customerId: string,
+    storeId: string,
+  ): Promise<{
+    maxFollowedStores: number;
+    followedStoreIds: string[];
+    stores: Store[];
+  }> {
+    await this.storeFollowsRepository.delete({ customerId, storeId });
+    return this.findFollowSummary(customerId);
+  }
+
+  async update(
+    id: string,
+    updateStoreDto: UpdateStoreDto,
+  ): Promise<Store | null> {
     if (updateStoreDto.name) {
       const baseSlug = this.generateSlug(updateStoreDto.name);
       const slug = await this.ensureUniqueSlug(baseSlug, id);
@@ -119,18 +224,23 @@ export class StoresService {
 
   async remove(id: string): Promise<void> {
     await this.productsRepository.delete({ storeId: id });
-    
+
     await this.storesRepository.delete(id);
   }
 
-
-  async createOrder(createOrderDto: CreateOrderDto, customerId?: string): Promise<Order> {
-    const { storeId, customerInfo, items, total } = createOrderDto;
+  async createOrder(
+    createOrderDto: CreateOrderDto,
+    customerId?: string,
+  ): Promise<Order> {
+    const { storeId, customerInfo, items, total, discount, couponCode } =
+      createOrderDto;
 
     const order = this.ordersRepository.create({
       storeId,
       customerId: customerId || undefined,
       totalAmount: total,
+      discountAmount: discount || 0,
+      couponCode: couponCode || undefined,
       status: OrderStatus.PENDING,
       shippingAddress: customerInfo.address,
       shippingCity: customerInfo.city,
@@ -166,7 +276,6 @@ export class StoresService {
     });
   }
 
-
   async findAllOrders(): Promise<Order[]> {
     return this.ordersRepository.find({
       relations: ['items', 'items.product', 'store', 'customer'],
@@ -189,9 +298,26 @@ export class StoresService {
     });
   }
 
-  async updateOrderStatus(id: string, status: OrderStatus): Promise<Order | null> {
+  async updateOrderStatus(
+    id: string,
+    status: OrderStatus,
+  ): Promise<Order | null> {
     await this.ordersRepository.update(id, { status });
-    return this.findOrderById(id);
+    const order = await this.findOrderById(id);
+
+    if (
+      order?.customerId &&
+      [OrderStatus.COMPLETED, OrderStatus.CANCELLED].includes(status)
+    ) {
+      await this.notificationsService.createOrderStatusNotification(
+        order.customerId,
+        order.id,
+        status,
+        order.store?.name,
+      );
+    }
+
+    return order;
   }
 
   async getDailySales(storeId: string, date: Date): Promise<number> {
@@ -214,7 +340,10 @@ export class StoresService {
     return parseFloat(result?.total || '0');
   }
 
-  async getBestSellingProducts(storeId: string, limit: number = 10): Promise<any[]> {
+  async getBestSellingProducts(
+    storeId: string,
+    limit: number = 10,
+  ): Promise<any[]> {
     return this.orderItemsRepository
       .createQueryBuilder('item')
       .select('item.productId', 'productId')
@@ -289,12 +418,16 @@ export class StoresService {
       .orderBy('COUNT(*)', 'DESC')
       .getRawMany();
 
-    const total = orders.reduce((sum, item) => sum + parseInt(item.orderCount), 0);
+    const total = orders.reduce(
+      (sum, item) => sum + parseInt(item.orderCount),
+      0,
+    );
 
-    return orders.map(item => ({
+    return orders.map((item) => ({
       city: item.city || 'Unknown',
       orderCount: parseInt(item.orderCount),
-      percentage: total > 0 ? ((parseInt(item.orderCount) / total) * 100).toFixed(1) : 0,
+      percentage:
+        total > 0 ? ((parseInt(item.orderCount) / total) * 100).toFixed(1) : 0,
     }));
   }
 }

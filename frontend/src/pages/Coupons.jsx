@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { couponsAPI } from '../api/api';
+import { couponsAPI, storesAPI } from '../api/api';
 
 export default function Coupons() {
   const [coupons, setCoupons] = useState([]);
+  const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [popup, setPopup] = useState(null);
 
   const [form, setForm] = useState({
     code: '',
@@ -15,8 +17,30 @@ export default function Coupons() {
 
   const loadCoupons = async () => {
     try {
-      const res = await couponsAPI.getAll();
-      setCoupons(res.data);
+      const storesRes = await storesAPI.getMyStores();
+      const storesData = storesRes.data || storesRes || [];
+      setStores(storesData);
+
+      if (storesData.length > 0) {
+        setForm((current) => ({
+          ...current,
+          storeId: current.storeId || storesData[0].id,
+        }));
+      }
+
+      const couponResponses = await Promise.all(
+        storesData.map((store) => couponsAPI.getByStore(store.id)),
+      );
+      setCoupons(
+        couponResponses.flatMap((res) =>
+          (res.data || res || []).map((coupon) => ({
+            ...coupon,
+            storeName:
+              storesData.find((store) => store.id === coupon.storeId)?.name ||
+              coupon.storeId,
+          })),
+        ),
+      );
     } catch (err) {
       console.error('Failed to load coupons:', err);
     } finally {
@@ -26,15 +50,22 @@ export default function Coupons() {
 
   const createCoupon = async (e) => {
     e.preventDefault();
+    setPopup(null);
 
     try {
       if (!form.code || !form.discountValue || !form.storeId) {
-        alert('Please fill all required fields');
+        setPopup({
+          type: 'error',
+          text: 'Please fill all required fields.',
+        });
         return;
       }
 
       if (Number(form.discountValue) <= 0) {
-        alert('Discount must be greater than 0');
+        setPopup({
+          type: 'error',
+          text: 'Discount must be greater than 0.',
+        });
         return;
       }
 
@@ -42,7 +73,10 @@ export default function Coupons() {
         form.discountType === 'percentage' &&
         Number(form.discountValue) > 100
       ) {
-        alert('Percentage cannot be more than 100');
+        setPopup({
+          type: 'error',
+          text: 'Percentage cannot be more than 100.',
+        });
         return;
       }
 
@@ -52,20 +86,27 @@ export default function Coupons() {
         expiresAt: form.expiresAt || null,
       });
 
-      alert('Coupon created successfully ✅');
+      setPopup({
+        type: 'success',
+        text: 'Coupon created successfully.',
+      });
 
       setForm({
         code: '',
         discountType: 'percentage',
         discountValue: '',
-        storeId: '',
+        storeId: stores[0]?.id || '',
         expiresAt: '',
       });
 
       loadCoupons();
     } catch (err) {
       console.error('Failed to create coupon:', err);
-      alert('Error creating coupon');
+      const msg = err?.response?.data?.message;
+      setPopup({
+        type: 'error',
+        text: Array.isArray(msg) ? msg.join(' · ') : msg || 'Error creating coupon.',
+      });
     }
   };
 
@@ -95,8 +136,28 @@ export default function Coupons() {
     loadCoupons();
   }, []);
 
+  useEffect(() => {
+    if (!popup) return;
+
+    const timeout = setTimeout(() => setPopup(null), 2600);
+    return () => clearTimeout(timeout);
+  }, [popup]);
+
   return (
     <div className="min-h-screen bg-slate-50 px-8 py-10">
+      {popup && (
+        <div className="fixed right-6 top-24 z-50">
+          <div
+            className={`rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg ${
+              popup.type === 'success'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                : 'border-red-200 bg-red-50 text-red-700'
+            }`}
+          >
+            {popup.text}
+          </div>
+        </div>
+      )}
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow p-8">
         <h1 className="text-3xl font-bold mb-2">Coupons</h1>
         <p className="text-slate-600 mb-6">
@@ -139,15 +200,20 @@ export default function Coupons() {
             required
           />
 
-          <input
-            placeholder="Store ID"
+          <select
             value={form.storeId}
             onChange={(e) =>
               setForm({ ...form, storeId: e.target.value })
             }
             className="border rounded-lg px-3 py-2"
             required
-          />
+          >
+            {stores.map((store) => (
+              <option key={store.id} value={store.id}>
+                {store.name}
+              </option>
+            ))}
+          </select>
 
           <input
             type="date"
@@ -197,7 +263,7 @@ export default function Coupons() {
                       ? `${coupon.discountValue}%`
                       : `৳${coupon.discountValue}`}
                   </td>
-                  <td className="p-3">{coupon.storeId}</td>
+                  <td className="p-3">{coupon.storeName || coupon.storeId}</td>
 
                   <td className="p-3">
                     <button

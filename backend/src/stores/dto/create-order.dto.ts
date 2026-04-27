@@ -80,6 +80,14 @@ export class CreateOrderDto {
   @IsNumber()
   subtotal: number;
 
+  @IsOptional()
+  @IsNumber()
+  discount?: number;
+
+  @IsOptional()
+  @IsString()
+  couponCode?: string | null;
+
   @IsNumber()
   shipping: number;
 

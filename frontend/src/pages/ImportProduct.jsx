@@ -9,6 +9,11 @@ const getApiErrorMessage = (err, fallbackMessage) => {
   return typeof message === "string" ? message : fallbackMessage;
 };
 
+const demoSocialLinks = [
+  "https://www.facebook.com/p/New-Balance-9060",
+  "https://www.instagram.com/p/demo-hoodie-drop",
+];
+
 const ImportProduct = () => {
   const navigate = useNavigate();
   const [link, setLink] = useState("");
@@ -377,9 +382,22 @@ const ImportProduct = () => {
           </div>
 
           <p className="mt-5 text-xs font-semibold text-emerald-950/50">
-            Demo note: this matches predefined public demo data in the backend
-            only. It does not scrape Facebook/Instagram or call platform APIs.
+            Use any Facebook or Instagram post/product URL. Demo import creates sample product data and does not scrape platform pages or call social APIs.
           </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {demoSocialLinks.map((demoLink) => (
+              <button
+                key={demoLink}
+                type="button"
+                onClick={() => setLink(demoLink)}
+                className="rounded-full bg-[#f6f1e7] px-4 py-2 text-xs font-black text-emerald-950 transition hover:bg-lime-200"
+                disabled={importing}
+              >
+                {demoLink.includes("instagram") ? "Use Instagram demo" : "Use Facebook demo"}
+              </button>
+            ))}
+          </div>
         </section>
 
 

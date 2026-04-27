@@ -33,6 +33,34 @@ export class NotificationsService {
     });
   }
 
+  createOrderStatusNotification(
+    buyerId: string,
+    orderId: string,
+    status: string,
+    storeName?: string,
+  ) {
+    const normalizedStatus = status.toLowerCase();
+    const statusLabel =
+      normalizedStatus === 'completed'
+        ? 'confirmed'
+        : normalizedStatus === 'cancelled'
+          ? 'cancelled'
+          : normalizedStatus;
+    const storeText = storeName ? ` from ${storeName}` : '';
+
+    return this.create({
+      buyerId,
+      type: NotificationType.ORDER_UPDATE,
+      title:
+        normalizedStatus === 'completed'
+          ? 'Order Confirmed'
+          : normalizedStatus === 'cancelled'
+            ? 'Order Cancelled'
+            : 'Order Updated',
+      message: `Your order #${orderId.slice(0, 8)}${storeText} has been ${statusLabel}.`,
+    });
+  }
+
   findAll() {
     return this.notificationsRepository.find({
       order: { createdAt: 'DESC' },

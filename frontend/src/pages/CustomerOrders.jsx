@@ -13,6 +13,7 @@ import {
   Store,
   ChevronDown,
   ChevronUp,
+  Star,
 } from "lucide-react";
 
 const formatCurrency = (amount) =>
@@ -69,6 +70,13 @@ const OrderCard = ({ order }) => {
   const [expanded, setExpanded] = useState(false);
 
   const items = Array.isArray(order.items) ? order.items : [];
+  const isReviewEligible = ["completed", "delivered"].includes(order.status);
+  const reviewableItems = items
+    .map((item) => ({
+      productId: item.product?.id || item.productId,
+      productName: item.name || item.product?.name || "Product",
+    }))
+    .filter((item) => Boolean(item.productId));
   const statusCfg = getStatus(order.status);
   const StatusIcon = statusCfg.icon;
 
@@ -138,6 +146,26 @@ const OrderCard = ({ order }) => {
         </div>
       )}
 
+      {isReviewEligible && reviewableItems.length > 0 && (
+        <div className="border-t border-neutral-100 px-5 py-3">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-neutral-500">
+            Review Purchased Items
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {reviewableItems.map((item, idx) => (
+              <Link
+                key={`${item.productId}-${idx}`}
+                to={`/product/${item.productId}`}
+                className="inline-flex items-center gap-1 rounded-full border border-neutral-300 px-3 py-1 text-xs font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-950"
+              >
+                <Star className="h-3.5 w-3.5" />
+                Review {item.productName}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Items toggle */}
       {items.length > 0 && (
         <>
@@ -163,6 +191,7 @@ const OrderCard = ({ order }) => {
                 const productName =
                   item.name || item.product?.name || "Product";
                 const image = item.image || item.product?.images?.[0];
+                const productId = item.product?.id || item.productId;
 
                 return (
                   <div
@@ -193,6 +222,15 @@ const OrderCard = ({ order }) => {
                     <p className="shrink-0 font-bold text-neutral-950">
                       {formatCurrency(unitPrice * qty)}
                     </p>
+                    {isReviewEligible && productId && (
+                      <Link
+                        to={`/product/${productId}`}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-full border border-neutral-300 px-3 py-1 text-xs font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-950"
+                      >
+                        <Star className="h-3.5 w-3.5" />
+                        Review
+                      </Link>
+                    )}
                   </div>
                 );
               })}

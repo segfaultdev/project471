@@ -1,11 +1,14 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Review } from './entities/review.entity';
 import { CreateReviewDto, UpdateReviewDto } from './dto/review.dto';
-import { Order, OrderStatus } from '../orders/order.entity';
+import { Order, OrderStatus } from '../stores/entities/order.entity';
 import { Product } from '../products/entities/product.entity';
-import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class ReviewsService {
@@ -16,42 +19,22 @@ export class ReviewsService {
     private ordersRepository: Repository<Order>,
     @InjectRepository(Product)
     private productsRepository: Repository<Product>,
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
   ) {}
 
   async verifyPurchase(userId: string, productId: string): Promise<boolean> {
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      return false;
-    }
-
-    const completedStatuses = [
-      OrderStatus.COMPLETED,
-      OrderStatus.DELIVERED,
-    ];
-
     const orders = await this.ordersRepository.find({
       where: {
-        status: In(completedStatuses),
+        customerId: userId,
+        status: OrderStatus.COMPLETED,
       },
-      relations: ['customer'],
+      relations: ['items'],
     });
 
     for (const order of orders) {
-      const belongsToUser =
-        order.customer?.id === userId ||
-        order.customerInfo?.email?.toLowerCase() === user.email.toLowerCase();
-
-      if (!belongsToUser) {
-        continue;
-      }
-
-      const hasProduct = order.items.some(item => 
-        item.productId.toString() === productId || item.productId === productId
+      const hasProduct = (order.items || []).some(
+        (item) =>
+          item.productId.toString() === productId ||
+          item.productId === productId,
       );
       if (hasProduct) {
         return true;
@@ -61,11 +44,19 @@ export class ReviewsService {
     return false;
   }
 
-  async create(userId: string, createReviewDto: CreateReviewDto): Promise<Review> {
-    const hasPurchased = await this.verifyPurchase(userId, createReviewDto.productId);
-    
+  async create(
+    userId: string,
+    createReviewDto: CreateReviewDto,
+  ): Promise<Review> {
+    const hasPurchased = await this.verifyPurchase(
+      userId,
+      createReviewDto.productId,
+    );
+
     if (!hasPurchased) {
-      throw new ForbiddenException('You can only review products you have purchased');
+      throw new ForbiddenException(
+        'You can only review products you have purchased',
+      );
     }
 
     const existingReview = await this.reviewsRepository.findOne({
@@ -112,7 +103,11 @@ export class ReviewsService {
     return review;
   }
 
-  async update(id: string, userId: string, updateReviewDto: UpdateReviewDto): Promise<Review> {
+  async update(
+    id: string,
+    userId: string,
+    updateReviewDto: UpdateReviewDto,
+  ): Promise<Review> {
     const review = await this.findOne(id);
 
     if (review.userId !== userId) {
@@ -142,14 +137,16 @@ export class ReviewsService {
 
   private async updateProductRating(productId: string): Promise<void> {
     const ratingData = await this.getAverageRating(productId);
-    
+
     await this.productsRepository.update(productId, {
       averageRating: ratingData.average,
       reviewCount: ratingData.count,
     });
   }
 
-  async getAverageRating(productId: string): Promise<{ average: number; count: number }> {
+  async getAverageRating(
+    productId: string,
+  ): Promise<{ average: number; count: number }> {
     const result = await this.reviewsRepository
       .createQueryBuilder('review')
       .where('review.productId = :productId', { productId })
@@ -163,7 +160,10 @@ export class ReviewsService {
     };
   }
 
-  async getUserReviewForProduct(userId: string, productId: string): Promise<Review | null> {
+  async getUserReviewForProduct(
+    userId: string,
+    productId: string,
+  ): Promise<Review | null> {
     return this.reviewsRepository.findOne({
       where: { userId, productId },
     });
@@ -172,7 +172,11 @@ export class ReviewsService {
   async getUserReviewStatus(
     userId: string,
     productId: string,
-  ): Promise<{ hasPurchased: boolean; canReview: boolean; review: Review | null }> {
+  ): Promise<{
+    hasPurchased: boolean;
+    canReview: boolean;
+    review: Review | null;
+  }> {
     const [hasPurchased, review] = await Promise.all([
       this.verifyPurchase(userId, productId),
       this.getUserReviewForProduct(userId, productId),

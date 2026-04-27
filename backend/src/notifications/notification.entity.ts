@@ -8,6 +8,7 @@ import {
 export enum NotificationType {
   DISCOUNT = 'discount',
   STOCK_UPDATE = 'stock_update',
+  ORDER_UPDATE = 'order_update',
   GENERAL = 'general',
 }
 

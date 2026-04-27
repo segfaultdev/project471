@@ -44,6 +44,11 @@ const getApiErrorMessage = (err, fallbackMessage) => {
   return typeof message === "string" ? message : fallbackMessage;
 };
 
+const demoStoreLinks = [
+  "https://www.facebook.com/DemoZapShoe",
+  "https://www.instagram.com/demo-fashion-house",
+];
+
 const resizeImageToLimit = (file, limit) =>
   new Promise((resolve, reject) => {
     const image = new Image();
@@ -391,33 +396,41 @@ const MyStores = () => {
               </button>
             </div>
 
-            <div className="mb-8 rounded-[2rem] bg-[#f6f1e7] p-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
-                <div className="flex-1">
-                  <label htmlFor="socialLink" className="mb-2 block text-sm font-black text-emerald-950">
-                    Import business profile from Facebook/Instagram
-                  </label>
-                  <div className="relative">
-                    <Link2 className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-950/45" />
-                    <input
-                      type="url"
-                      id="socialLink"
-                      name="socialLink"
-                      value={formData.socialLink}
-                      onChange={handleChange}
-                      className="w-full rounded-2xl border border-emerald-950/10 bg-white px-12 py-3 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
-                      placeholder="Paste Facebook or Instagram page link"
-                    />
-                  </div>
-                  <p className="mt-2 text-sm font-semibold text-emerald-950/55">
-                    Imports public demo info from predefined backend data only. No live social scraping or platform APIs.
+            <div className="mb-8 rounded-[2rem] border border-emerald-950/10 bg-[#f6f1e7] p-5">
+              <div className="mb-5 flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-950 text-lime-300">
+                  <Link2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-emerald-950">
+                    Import store profile
+                  </h3>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-emerald-950/60">
+                    Paste any Facebook or Instagram business/page URL to fill this form with editable demo store details.
                   </p>
                 </div>
+              </div>
+
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+                <div className="relative flex-1">
+                  <Link2 className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-950/45" />
+                  <input
+                    type="text"
+                    id="socialLink"
+                    name="socialLink"
+                    value={formData.socialLink}
+                    onChange={handleChange}
+                    className="w-full rounded-2xl border border-emerald-950/10 bg-white px-12 py-4 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+                    placeholder="https://www.facebook.com/your-shop-page"
+                    disabled={storeImporting}
+                  />
+                </div>
+
                 <button
                   type="button"
                   onClick={handleSocialImport}
-                  disabled={storeImporting}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-950 px-6 py-3.5 font-black text-white transition hover:-translate-y-1 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={storeImporting || !formData.socialLink.trim()}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-950 px-6 py-4 font-black text-white transition hover:-translate-y-1 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {storeImporting ? (
                     <>
@@ -432,6 +445,29 @@ const MyStores = () => {
                   )}
                 </button>
               </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {demoStoreLinks.map((demoLink) => (
+                  <button
+                    key={demoLink}
+                    type="button"
+                    onClick={() =>
+                      setFormData((current) => ({
+                        ...current,
+                        socialLink: demoLink,
+                      }))
+                    }
+                    className="rounded-full bg-white px-4 py-2 text-xs font-black text-emerald-950 transition hover:bg-lime-200"
+                    disabled={storeImporting}
+                  >
+                    {demoLink.includes("instagram") ? "Use Instagram demo" : "Use Facebook demo"}
+                  </button>
+                ))}
+              </div>
+
+              <p className="mt-4 text-xs font-semibold text-emerald-950/50">
+                Demo import creates sample store data from the URL. It does not scrape Facebook/Instagram or call platform APIs.
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">

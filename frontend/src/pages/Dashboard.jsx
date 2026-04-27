@@ -531,7 +531,7 @@ const Dashboard = () => {
                     <Link key={product.id} to="/my-products" className="flex items-center justify-between gap-4 rounded-2xl bg-[#f6f1e7] p-4 transition hover:bg-lime-100">
                       <div className="min-w-0">
                         <p className="truncate font-black text-emerald-950">{product.name}</p>
-                        <p className="mt-1 text-sm font-semibold text-emerald-950/60">{product.category || "Uncategorized"}</p>
+                        <p className="mt-1 text-sm font-semibold text-emerald-950/60">{product.category?.name || product.category || "Uncategorized"}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-black">৳{product.price}</p>
@@ -671,7 +671,7 @@ const Dashboard = () => {
         <section className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           <ActionCard title="Browse Stores" description="Discover local sellers and visit their storefronts to shop products." href="/stores" icon={Building2} primary />
           <ActionCard title="Wishlist" description="Save products from store pages that you want to buy later." href="/wishlist" icon={Heart} />
-          <ActionCard title="My Orders" description="Track purchases, delivery status, and returns." href="/my-orders" icon={ClipboardList} />
+          <ActionCard title="My Orders" description="Track purchases, delivery status, and returns." href="/customer-orders" icon={ClipboardList} />
         </section>
 
         <section className="mt-10 grid gap-8 lg:grid-cols-2">

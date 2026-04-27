@@ -66,7 +66,7 @@ export class ProductsController {
     if (!product) {
       throw new NotFoundException('Product not found');
     }
-    return this.productsService.findSimilarProducts(product.name, productId);
+    return this.productsService.findSimilarProducts(product.name, product.categoryId, productId);
   }
 
   @Public()

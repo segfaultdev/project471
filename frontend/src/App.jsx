@@ -23,6 +23,7 @@ import Sell from "./pages/Sell";
 import ImportProduct from "./pages/ImportProduct";
 import BulkImport from "./pages/BulkImport";
 import MyOrders from "./pages/MyOrders";
+import CustomerOrders from "./pages/CustomerOrders";
 import Coupons from "./pages/Coupons";
 import Notifications from "./pages/Notifications";
 import SalesAnalytics from "./pages/SalesAnalytics";
@@ -90,12 +91,10 @@ function App() {
           <Route
             path="/compare/:productId"
             element={
-              <ProtectedRoute>
-                <div>
-                  <Navbar />
-                  <ProductComparison />
-                </div>
-              </ProtectedRoute>
+              <div>
+                <Navbar />
+                <ProductComparison />
+              </div>
             }
           />
 
@@ -161,10 +160,22 @@ function App() {
           <Route
             path="/my-orders"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireVendor={true}>
                 <div>
                   <Navbar />
                   <MyOrders />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/customer-orders"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <Navbar />
+                  <CustomerOrders />
                 </div>
               </ProtectedRoute>
             }

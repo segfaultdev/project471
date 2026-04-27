@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   X,
   Store,
+  GitCompare,
 } from "lucide-react";
 
 const formatCurrency = (amount) => `৳${Number(amount || 0).toLocaleString("en-BD")}`;
@@ -382,7 +383,7 @@ const ProductDetail = () => {
 
           {product.category && (
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-neutral-500">
-              {product.category}
+              {product.category?.name || product.category}
             </p>
           )}
 
@@ -412,7 +413,7 @@ const ProductDetail = () => {
             </div>
           )}
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-[1fr_auto]">
+          <div className="mt-8 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
             <button
               onClick={handleAddToCart}
               disabled={outOfStock}
@@ -428,6 +429,13 @@ const ProductDetail = () => {
               <Heart className="h-5 w-5" />
               Save
             </button>
+            <Link
+              to={`/compare/${product.id}`}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200 bg-white px-7 py-4 font-semibold text-neutral-800 transition hover:border-neutral-950"
+            >
+              <GitCompare className="h-5 w-5" />
+              Compare
+            </Link>
           </div>
         </div>
       </section>

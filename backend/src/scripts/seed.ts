@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm';
 import { User, UserRole } from '../users/entities/user.entity';
 import { Store } from '../stores/entities/store.entity';
 import { Product } from '../products/entities/product.entity';
+import { Category } from '../categories/entities/category.entity';
 import { Coupon, DiscountType } from '../coupons/coupon.entity';
 import { Order, OrderStatus } from '../stores/entities/order.entity';
 import { OrderItem } from '../stores/entities/order-item.entity';
@@ -21,7 +22,7 @@ function buildDataSource(): DataSource {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-    entities: [User, Store, Product, Coupon, Order, OrderItem],
+    entities: [User, Store, Product, Category, Coupon, Order, OrderItem],
     synchronize,
     logging,
   });
@@ -35,6 +36,7 @@ async function seed() {
     const userRepo = dataSource.getRepository(User);
     const storeRepo = dataSource.getRepository(Store);
     const productRepo = dataSource.getRepository(Product);
+    const categoryRepo = dataSource.getRepository(Category);
     const couponRepo = dataSource.getRepository(Coupon);
     const orderRepo = dataSource.getRepository(Order);
     const orderItemRepo = dataSource.getRepository(OrderItem);
@@ -116,13 +118,26 @@ async function seed() {
       console.log(`Created store for vendor: ${vendorUser.email}`);
     }
 
+    let generalCategory = await categoryRepo.findOne({
+      where: { storeId: store.id, name: 'General' },
+    });
+    if (!generalCategory) {
+      generalCategory = await categoryRepo.save(
+        categoryRepo.create({
+          name: 'General',
+          slug: `general-${store.id.slice(0, 8)}`,
+          storeId: store.id,
+        }),
+      );
+    }
+
     const productsToSeed = [
       {
         name: 'Seed Product A',
         description: 'Demo seeded product A',
         price: 19.99,
         stock: 30,
-        category: 'General',
+        categoryId: generalCategory.id,
         images: [],
       },
       {
@@ -130,7 +145,7 @@ async function seed() {
         description: 'Demo seeded product B',
         price: 49.5,
         stock: 12,
-        category: 'General',
+        categoryId: generalCategory.id,
         images: [],
       },
     ];
@@ -195,12 +210,25 @@ async function seed() {
       });
 
       if (productsForStore.length === 0) {
+        let fallbackCategory = await categoryRepo.findOne({
+          where: { storeId: currentStore.id, name: 'General' },
+        });
+        if (!fallbackCategory) {
+          fallbackCategory = await categoryRepo.save(
+            categoryRepo.create({
+              name: 'General',
+              slug: `general-${currentStore.id.slice(0, 8)}`,
+              storeId: currentStore.id,
+            }),
+          );
+        }
+
         const fallbackProduct = productRepo.create({
           name: `Analytics Product ${currentStore.name}`,
           description: 'Auto-created product for analytics seeding',
           price: 29.99,
           stock: 100,
-          category: 'General',
+          categoryId: fallbackCategory.id,
           images: [],
           storeId: currentStore.id,
           isAvailable: true,

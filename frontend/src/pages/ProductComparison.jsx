@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { productsAPI } from '../api/api';
+import { productsAPI, categoriesAPI } from '../api/api';
 import { Loader2, ChevronLeft, Star, Truck, TrendingDown } from 'lucide-react';
 
 const ProductComparison = () => {
@@ -17,9 +17,12 @@ const ProductComparison = () => {
   const [maxPrice, setMaxPrice] = useState(10000);
   const [minRating, setMinRating] = useState(0);
   const [maxDelivery, setMaxDelivery] = useState(30);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [availableCategories, setAvailableCategories] = useState([]);
 
   useEffect(() => {
     fetchComparisonData();
+    fetchCategories();
   }, [productId]);
 
   const fetchComparisonData = async () => {
@@ -40,17 +43,28 @@ const ProductComparison = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const categoriesRes = await categoriesAPI.getAll();
+      setAvailableCategories(categoriesRes.data || []);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    }
+  };
+
   const getSortedAndFilteredProducts = () => {
     let filtered = similarProducts.filter((product) => {
       const price = parseFloat(product.price || 0);
       const rating = parseFloat(product.store?.rating || 0);
       const delivery = product.store?.deliveryDays || 0;
+      const categoryId = product.category?.id;
 
       return (
         price >= minPrice &&
         price <= maxPrice &&
         rating >= minRating &&
-        delivery <= maxDelivery
+        delivery <= maxDelivery &&
+        (selectedCategory === '' || categoryId === selectedCategory)
       );
     });
 
@@ -250,6 +264,25 @@ const ProductComparison = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Category Filter */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">Category</label>
+                    <div className="space-y-2">
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">All Categories</option>
+                        {availableCategories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Filter Reset Button */}
@@ -259,6 +292,7 @@ const ProductComparison = () => {
                     setMaxPrice(10000);
                     setMinRating(0);
                     setMaxDelivery(30);
+                    setSelectedCategory('');
                   }}
                   className="mt-4 text-xs font-semibold text-blue-600 hover:text-blue-700 px-3 py-1 rounded hover:bg-blue-50"
                 >
@@ -338,6 +372,11 @@ const ProductComparison = () => {
                   </div>
 
                   <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Category</span>
+                    <span className="text-sm font-medium text-slate-900">{mainProduct.category?.name || 'Uncategorized'}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
                     <span className="text-sm text-slate-600">Stock</span>
                     <span className={`text-sm font-bold ${mainProduct.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {mainProduct.stock > 0 ? `${mainProduct.stock} available` : 'Out of stock'}
@@ -399,6 +438,11 @@ const ProductComparison = () => {
                     <div className="flex justify-between">
                       <span className="text-slate-600">Delivery</span>
                       <span className="font-medium text-slate-900">{product.store?.deliveryDays || 3} days</span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Category</span>
+                      <span className="font-medium text-slate-900">{product.category?.name || 'Uncategorized'}</span>
                     </div>
 
                     <div className="flex justify-between">

@@ -19,9 +19,9 @@ export class CreateProductDto {
   @IsOptional()
   stock?: number;
 
-  @IsString({ message: 'Category must be a string' })
+  @IsString({ message: 'Category ID must be a string' })
   @IsOptional()
-  category?: string;
+  categoryId?: string;
 
   @IsArray({ message: 'Images must be an array' })
   @IsOptional()

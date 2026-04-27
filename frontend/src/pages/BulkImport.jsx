@@ -108,7 +108,7 @@ const BulkImport = () => {
                         description: product['Description'] || product.description || '',
                         price: parseFloat(product['Price'] || product.price || 0),
                         stock: parseInt(product['Stock'] || product.stock || 0),
-                        category: product['Category'] || product.category || '',
+                        categoryId: product['CategoryId'] || product['Category'] || product.categoryId || undefined,
                         weight: product['Weight'] ? parseFloat(product['Weight'] || product.weight) : undefined,
                         storeId: storeId,
                         images: []
@@ -160,7 +160,7 @@ const BulkImport = () => {
                 'Description': 'Product description here',
                 'Price': 99.99,
                 'Stock': 50,
-                'Category': 'Electronics',
+                'CategoryId': 'electronics',
                 'Weight': 1.5
             }
         ]);
@@ -330,7 +330,7 @@ const BulkImport = () => {
                                                     <td className="p-3">{product['Product Name'] || product.name}</td>
                                                     <td className="p-3">${product['Price'] || product.price}</td>
                                                     <td className="p-3">{product['Stock'] || product.stock}</td>
-                                                    <td className="p-3">{product['Category'] || product.category}</td>
+                                                    <td className="p-3">{product['CategoryId'] || product.categoryId}</td>
                                                 </tr>
                                             ))}
                                         </tbody>

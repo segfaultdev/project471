@@ -16,11 +16,20 @@ async function bootstrap() {
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:5175',
+    'http://localhost:5176',
     'http://localhost:3000',
   ];
 
   app.enableCors({
-    origin: [...defaultOrigins, ...envOrigins],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const allowed = [...defaultOrigins, ...envOrigins];
+      if (allowed.includes(origin) || /\.vercel\.app$/.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+      }
+    },
     credentials: true,
   });
 
@@ -30,9 +39,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-
       forbidNonWhitelisted: true,
-
       transform: true,
     }),
   );

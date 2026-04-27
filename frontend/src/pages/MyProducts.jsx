@@ -14,7 +14,7 @@ import {
   UploadCloud,
   X,
 } from "lucide-react";
-import { productsAPI, storesAPI } from "../api/api";
+import { categoriesAPI, productsAPI, storesAPI } from "../api/api";
 import ConfirmModal from "../components/ConfirmModal";
 
 const LOW_STOCK_THRESHOLD = 5;
@@ -24,7 +24,8 @@ const emptyProductForm = {
   description: "",
   price: "",
   stock: "",
-  category: "",
+  categoryId: "",
+  customCategory: "",
   storeId: "",
   weight: "",
   image: "",
@@ -36,6 +37,7 @@ const formatCurrency = (amount) =>
 const MyProducts = () => {
   const [products, setProducts] = useState([]);
   const [stores, setStores] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [selectedStoreId, setSelectedStoreId] = useState("");
   const [stockChanges, setStockChanges] = useState({});
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,7 @@ const MyProducts = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [deleteProductTarget, setDeleteProductTarget] = useState(null);
   const [deleteProductLoading, setDeleteProductLoading] = useState(false);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [formData, setFormData] = useState(emptyProductForm);
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState("");
@@ -110,10 +113,14 @@ const MyProducts = () => {
       setLoading(true);
       setError("");
 
-      const productsRes = await productsAPI.getByStore(storeId);
+      const [productsRes, categoriesRes] = await Promise.all([
+        productsAPI.getByStore(storeId),
+        categoriesAPI.getByStore(storeId),
+      ]);
       const productsData = normalizeArrayResponse(productsRes);
 
       setProducts(productsData);
+      setCategories(normalizeArrayResponse(categoriesRes));
       setStockChanges(getInitialStockChanges(productsData));
     } catch (err) {
       setError(
@@ -136,6 +143,7 @@ const MyProducts = () => {
   const resetForm = () => {
     setShowForm(false);
     setEditingProduct(null);
+    setShowNewCategoryInput(false);
     setFormData(
       selectedStoreId
         ? { ...emptyProductForm, storeId: selectedStoreId }
@@ -147,6 +155,7 @@ const MyProducts = () => {
 
   const openCreateForm = () => {
     setEditingProduct(null);
+    setShowNewCategoryInput(false);
     setFormData(
       selectedStoreId
         ? { ...emptyProductForm, storeId: selectedStoreId }
@@ -186,11 +195,26 @@ const MyProducts = () => {
     }
   };
 
+  const fetchCategoriesForStore = async (storeId) => {
+    try {
+      const response = await categoriesAPI.getByStore(storeId);
+      setCategories(response.data || []);
+    } catch (err) {
+      console.error("Failed to fetch store categories:", err);
+    }
+  };
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    // If store changed, fetch categories for that store
+    if (name === 'storeId') {
+      fetchCategoriesForStore(value);
+    }
   };
 
   const handleSelectedStoreChange = (storeId) => {
@@ -244,17 +268,33 @@ const MyProducts = () => {
       return;
     }
 
-    const productData = {
-      ...formData,
-      price: parseFloat(formData.price),
-      stock: parseInt(formData.stock, 10) || 0,
-      weight: formData.weight ? parseFloat(formData.weight) : undefined,
-      images: formData.image ? [formData.image] : [],
-    };
-
-    delete productData.image;
-
     try {
+      let categoryId = formData.categoryId;
+
+      if (formData.customCategory.trim() && !categoryId) {
+        try {
+          const newCategoryRes = await categoriesAPI.create({
+            name: formData.customCategory,
+            storeId: formData.storeId,
+          });
+          categoryId = newCategoryRes.data.id;
+        } catch (err) {
+          setError("Failed to create category.");
+          return;
+        }
+      }
+
+      const productData = {
+        name: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock, 10) || 0,
+        categoryId: categoryId || undefined,
+        storeId: formData.storeId,
+        weight: formData.weight ? parseFloat(formData.weight) : undefined,
+        images: formData.image ? [formData.image] : [],
+      };
+
       if (editingProduct) {
         await productsAPI.update(editingProduct.id, productData);
         setSuccess("Product updated successfully.");
@@ -273,12 +313,14 @@ const MyProducts = () => {
 
   const handleEdit = (product) => {
     setEditingProduct(product);
+    setShowNewCategoryInput(false);
     setFormData({
       name: product.name || "",
       description: product.description || "",
       price: product.price?.toString() || "",
       stock: product.stock?.toString() || "0",
-      category: product.category || "",
+      categoryId: product.categoryId || "",
+      customCategory: "",
       storeId: product.storeId || product.store?.id || "",
       weight: product.weight?.toString() || "",
       image: product.images?.[0] || "",
@@ -288,6 +330,7 @@ const MyProducts = () => {
     setError("");
     setSuccess("");
     window.scrollTo({ top: 0, behavior: "smooth" });
+    if (product.storeId) fetchCategoriesForStore(product.storeId);
   };
 
   const handleDelete = async (product) => {
@@ -328,6 +371,11 @@ const MyProducts = () => {
   ).length;
   const selectedStore =
     stores.find((store) => store.id === selectedStoreId) || stores.at(0);
+
+  const getCategoryName = (product) =>
+    product.category?.name ||
+    categories.find((category) => category.id === product.categoryId)?.name ||
+    "Uncategorized";
 
   if (loading) {
     return (
@@ -691,20 +739,72 @@ const MyProducts = () => {
 
                 <div>
                   <label
-                    htmlFor="category"
+                    htmlFor="categoryId"
                     className="mb-2 block text-sm font-black text-emerald-950"
                   >
                     Category
                   </label>
-                  <input
-                    type="text"
-                    id="category"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="w-full rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-4 py-3 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
-                    placeholder="Fashion, Gadgets, Beauty..."
-                  />
+                  {!showNewCategoryInput ? (
+                    <div className="space-y-2">
+                      <select
+                        id="categoryId"
+                        name="categoryId"
+                        value={formData.categoryId}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            categoryId: e.target.value,
+                            customCategory: "",
+                          });
+                        }}
+                        className="w-full rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-4 py-3 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+                      >
+                        <option value="">Select a category...</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowNewCategoryInput(true)}
+                        className="w-full rounded-xl px-3 py-2 text-xs font-black text-emerald-950 transition hover:bg-lime-100"
+                      >
+                        Create New Category
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={formData.customCategory}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          customCategory: e.target.value,
+                          categoryId: "",
+                        })}
+                        placeholder="Enter new category name..."
+                        className="w-full rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-4 py-3 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewCategoryInput(false);
+                          setFormData({
+                            ...formData,
+                            customCategory: "",
+                            categoryId: "",
+                          });
+                        }}
+                        className="w-full rounded-xl px-3 py-2 text-xs font-black text-emerald-950/70 transition hover:bg-lime-100"
+                      >
+                        Back to Existing Categories
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -830,7 +930,7 @@ const MyProducts = () => {
                           {product.name}
                         </h3>
                         <p className="mt-2 text-sm font-bold text-emerald-950/55">
-                          {product.category || "Uncategorized"}
+                          {getCategoryName(product)}
                         </p>
                       </div>
                       <p className="rounded-full bg-lime-300 px-4 py-2 text-sm font-black text-emerald-950">

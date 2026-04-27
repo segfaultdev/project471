@@ -174,7 +174,7 @@ const Navbar = () => {
     { label: "Browse Stores", to: "/stores", icon: Building2 },
     { label: "Notifications", to: "/notifications", icon: Bell },
     { label: "Wishlist", to: "/wishlist", icon: Heart },
-    { label: "Orders", to: "/my-orders", icon: ClipboardList },
+    { label: "My Orders", to: "/customer-orders", icon: ClipboardList },
   ];
 
   const vendorLinks = [

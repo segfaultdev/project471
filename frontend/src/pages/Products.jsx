@@ -99,7 +99,7 @@ const Products = () => {
                   <div className="flex flex-wrap gap-2 mb-4">
                     {product.category && (
                       <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                        {product.category}
+                        {product.category?.name || 'Uncategorized'}
                       </span>
                     )}
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${

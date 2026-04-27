@@ -12,6 +12,7 @@ import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { SocialImportModule } from './social-import/social-import.module';
+import { CategoriesModule } from './categories/categories.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -59,6 +60,7 @@ import { CouponsModule } from './coupons/coupons.module';
     NotificationsModule,
     CouponsModule,
     SocialImportModule,
+    CategoriesModule,
   ],
 
   controllers: [AppController],

@@ -7,10 +7,6 @@ import { SocialImportService } from './social-import.service';
 export class SocialImportController {
   constructor(private readonly socialImportService: SocialImportService) {}
 
-  /**
-   * Controlled MVP demo import. This only matches predefined demo data because
-   * real Facebook/Instagram scraping is restricted and unreliable.
-   */
   @Public()
   @Post('social-store')
   @HttpCode(200)
@@ -18,10 +14,6 @@ export class SocialImportController {
     return this.socialImportService.findStore(importDto.url);
   }
 
-  /**
-   * Controlled MVP demo import. This only matches predefined demo data because
-   * real Facebook/Instagram scraping is restricted and unreliable.
-   */
   @Public()
   @Post('social-product')
   @HttpCode(200)

@@ -4,7 +4,6 @@ import { ShoppingCart, Heart, User } from "lucide-react";
 const ShopNavbar = () => {
   const location = useLocation();
 
-  // Get cart count from localStorage
   const getCartCount = () => {
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
     return cart.reduce((total, item) => total + item.quantity, 0);
@@ -14,7 +13,7 @@ const ShopNavbar = () => {
     <nav className="border-b border-slate-100 bg-white">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo/Brand */}
+          
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-3">
               <img
@@ -25,9 +24,9 @@ const ShopNavbar = () => {
             </Link>
           </div>
 
-          {/* Right side actions */}
+          
           <div className="flex items-center gap-4">
-            {/* Cart Button */}
+            
             <Link
               to="/cart"
               className="relative inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
@@ -41,7 +40,7 @@ const ShopNavbar = () => {
               )}
             </Link>
 
-            {/* Wishlist Button */}
+            
             <Link
               to="/shop-wishlist"
               className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
@@ -50,7 +49,7 @@ const ShopNavbar = () => {
               Wishlist
             </Link>
 
-            {/* Sign In Button */}
+            
             <Link
               to="/shop-login"
               state={{ from: location.pathname }}

@@ -33,7 +33,6 @@ const BulkImport = () => {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
 
-                // Parse Stores sheet
                 const storesSheet = workbook.Sheets['Stores'];
                 if (storesSheet) {
                     const storesJson = XLSX.utils.sheet_to_json(storesSheet);
@@ -42,7 +41,6 @@ const BulkImport = () => {
                     setError('No "Stores" sheet found in the Excel file');
                 }
 
-                // Parse Products sheet
                 const productsSheet = workbook.Sheets['Products'];
                 if (productsSheet) {
                     const productsJson = XLSX.utils.sheet_to_json(productsSheet);
@@ -67,11 +65,10 @@ const BulkImport = () => {
             storesErrors: [],
             productsSuccess: 0,
             productsErrors: [],
-            storeMapping: {} // Map store names to IDs
+                storeMapping: {}
         };
 
         try {
-            // Step 1: Import Stores
             for (let i = 0; i < storesData.length; i++) {
                 const store = storesData[i];
                 try {
@@ -86,7 +83,6 @@ const BulkImport = () => {
 
                     const response = await storesAPI.create(storeData);
                     importResults.storesSuccess++;
-                    // Map store name to ID for products
                     importResults.storeMapping[storeData.name] = response.data.id;
                 } catch (err) {
                     importResults.storesErrors.push({
@@ -97,7 +93,6 @@ const BulkImport = () => {
                 }
             }
 
-            // Step 2: Import Products
             for (let i = 0; i < productsData.length; i++) {
                 const product = productsData[i];
                 try {
@@ -116,7 +111,7 @@ const BulkImport = () => {
                         category: product['Category'] || product.category || '',
                         weight: product['Weight'] ? parseFloat(product['Weight'] || product.weight) : undefined,
                         storeId: storeId,
-                        images: [] // Can be extended later
+                        images: []
                     };
 
                     await productsAPI.create(productData);
@@ -147,7 +142,6 @@ const BulkImport = () => {
     };
 
     const downloadTemplate = () => {
-        // Create Stores sheet
         const storesWS = XLSX.utils.json_to_sheet([
             {
                 'Store Name': 'Example Store',
@@ -159,7 +153,6 @@ const BulkImport = () => {
             }
         ]);
 
-        // Create Products sheet
         const productsWS = XLSX.utils.json_to_sheet([
             {
                 'Store Name': 'Example Store',
@@ -172,12 +165,10 @@ const BulkImport = () => {
             }
         ]);
 
-        // Create workbook
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, storesWS, 'Stores');
         XLSX.utils.book_append_sheet(wb, productsWS, 'Products');
 
-        // Download
         XLSX.writeFile(wb, 'shoplinker_import_template.xlsx');
     };
 
@@ -189,7 +180,7 @@ const BulkImport = () => {
                     <p className="text-slate-600 mt-2">Import stores and products from Excel file</p>
                 </div>
 
-                {/* Instructions Card */}
+                
                 <div className="rounded-3xl border border-slate-200 bg-white p-8 mb-8">
                     <div className="flex items-start gap-4 mb-6">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white">
@@ -245,7 +236,7 @@ const BulkImport = () => {
                     </button>
                 </div>
 
-                {/* Upload Section */}
+                
                 <div className="rounded-3xl border border-slate-200 bg-white p-8 mb-8">
                     <h2 className="text-2xl font-bold text-slate-900 mb-6">Upload Excel File</h2>
 
@@ -278,10 +269,10 @@ const BulkImport = () => {
                     )}
                 </div>
 
-                {/* Preview Section */}
+                
                 {(storesData.length > 0 || productsData.length > 0) && !results && (
                     <div className="space-y-6">
-                        {/* Stores Preview */}
+                        
                         {storesData.length > 0 && (
                             <div className="rounded-3xl border border-slate-200 bg-white p-8">
                                 <h3 className="text-xl font-bold text-slate-900 mb-4">
@@ -315,7 +306,7 @@ const BulkImport = () => {
                             </div>
                         )}
 
-                        {/* Products Preview */}
+                        
                         {productsData.length > 0 && (
                             <div className="rounded-3xl border border-slate-200 bg-white p-8">
                                 <h3 className="text-xl font-bold text-slate-900 mb-4">
@@ -351,7 +342,7 @@ const BulkImport = () => {
                             </div>
                         )}
 
-                        {/* Import Button */}
+                        
                         <div className="flex gap-4">
                             <button
                                 onClick={handleImport}
@@ -386,7 +377,7 @@ const BulkImport = () => {
                     </div>
                 )}
 
-                {/* Results Section */}
+                
                 {results && (
                     <div className="rounded-3xl border border-slate-200 bg-white p-8">
                         <div className="flex items-center gap-3 mb-6">
@@ -395,7 +386,7 @@ const BulkImport = () => {
                         </div>
 
                         <div className="space-y-6">
-                            {/* Stores Results */}
+                            
                             <div className="border-l-4 border-green-500 bg-green-50 p-4 rounded-r-2xl">
                                 <h3 className="font-bold text-green-900 mb-2">Stores Imported</h3>
                                 <p className="text-green-700">
@@ -413,7 +404,7 @@ const BulkImport = () => {
                                 )}
                             </div>
 
-                            {/* Products Results */}
+                            
                             <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-r-2xl">
                                 <h3 className="font-bold text-blue-900 mb-2">Products Imported</h3>
                                 <p className="text-blue-700">
@@ -431,7 +422,7 @@ const BulkImport = () => {
                                 )}
                             </div>
 
-                            {/* Action Buttons */}
+                            
                             <div className="flex gap-4 pt-4">
                                 <button
                                     onClick={() => navigate('/my-stores')}

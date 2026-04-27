@@ -102,7 +102,6 @@ const Dashboard = () => {
       setProducts(productsData);
       setOrders(ordersData);
 
-      // Calculate stats
       const totalStock = productsData.reduce(
         (sum, p) => sum + (p.stock || 0),
         0,
@@ -116,7 +115,7 @@ const Dashboard = () => {
 
       setStats({
         totalProducts: productsData.length,
-        publishedProducts: productsData.length, // Backend doesn't have status field yet
+         publishedProducts: productsData.length,
         draftProducts: 0,
         totalStock: totalStock,
         totalOrders: ordersData.length,
@@ -130,7 +129,6 @@ const Dashboard = () => {
     }
   };
 
-  // Vendor Dashboard
   if (isVendor()) {
     if (loading) {
       return (
@@ -145,7 +143,7 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-slate-50">
         <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-          {/* Header */}
+          
           <div className="rounded-2xl bg-white border border-slate-200 p-8 mb-8 shadow-md">
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="flex-1">
@@ -183,7 +181,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Store Info Section */}
+          
           {selectedStore && (
             <section className="mb-8 rounded-2xl bg-white p-8 border border-slate-200 shadow-md">
               <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -264,10 +262,10 @@ const Dashboard = () => {
             </section>
           )}
 
-          {/* Stats Section */}
+          
           <section className="mb-8">
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-              {/* Total Products Card */}
+              
               <div className="rounded-2xl bg-white p-6 border border-slate-200 shadow-md transition-all duration-200 hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
@@ -294,7 +292,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Published Products Card */}
+              
               <div className="rounded-2xl bg-white p-6 border border-slate-200 shadow-md transition-all duration-200 hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-50 text-green-600">
@@ -323,7 +321,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Draft Products Card */}
+              
               <div className="rounded-2xl bg-white p-6 border border-slate-200 shadow-md transition-all duration-200 hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
@@ -345,7 +343,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Total Stock Card */}
+              
               <div className="rounded-2xl bg-white p-6 border border-slate-200 shadow-md transition-all duration-200 hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
@@ -370,9 +368,9 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Orders Stats Row */}
+            
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {/* Total Orders Card */}
+              
               <div className="rounded-2xl bg-white p-6 border border-slate-200 shadow-md transition-all duration-200 hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
@@ -394,7 +392,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Pending Orders Card */}
+              
               <div className="rounded-2xl bg-white p-6 border border-slate-200 shadow-md transition-all duration-200 hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-50 text-yellow-600">
@@ -416,7 +414,7 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Completed Orders Card */}
+              
               <div className="rounded-2xl bg-white p-6 border border-slate-200 shadow-md transition-all duration-200 hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-50 text-green-600">
@@ -442,7 +440,7 @@ const Dashboard = () => {
             </div>
           </section>
 
-          {/* Quick Actions */}
+          
           <section className="mb-8">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-slate-900">
@@ -529,7 +527,7 @@ const Dashboard = () => {
             </div>
           </section>
 
-          {/* Recent Products */}
+          
           {products.length > 0 && (
             <section className="mt-10 rounded-3xl bg-white p-8 border border-slate-200">
               <div className="flex items-center justify-between mb-6">
@@ -622,7 +620,7 @@ const Dashboard = () => {
             </section>
           )}
 
-          {/* Recent Orders */}
+          
           {orders.length > 0 && (
             <section className="mt-10 rounded-3xl bg-white p-8 border border-slate-200">
               <div className="flex items-center justify-between mb-6">
@@ -711,7 +709,6 @@ const Dashboard = () => {
     );
   }
 
-  // Customer Dashboard
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
@@ -724,7 +721,7 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* Search Bar */}
+        
         <div className="mb-8">
           <div className="relative max-w-xl">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -740,7 +737,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Store Results */}
+        
         {storeSearchQuery && (
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-slate-900 mb-4">

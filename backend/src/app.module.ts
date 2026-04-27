@@ -1,13 +1,3 @@
-/**
- * AppModule - Root module of the application
- * Configures:
- * 1. Environment variables (ConfigModule)
- * 2. Database connection (TypeOrmModule)
- * 3. Feature modules (UsersModule, AuthModule, StoresModule, ProductsModule)
- * 4. Global authentication guard (JwtAuthGuard)
- *
- * This is the entry point that ties everything together
- */
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ConfigService } from '@nestjs/config';
@@ -29,13 +19,11 @@ import { CouponsModule } from './coupons/coupons.module';
 
 @Module({
   imports: [
-    // ConfigModule - Loads environment variables from .env file
     ConfigModule.forRoot({
-      isGlobal: true, // Make env variables available everywhere
-      envFilePath: '.env', // Path to .env file
+      isGlobal: true,
+      envFilePath: '.env',
     }),
 
-    // TypeOrmModule - Configures DB connection from environment variables
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
@@ -72,33 +60,27 @@ import { CouponsModule } from './coupons/coupons.module';
       },
     }),
 
-    UsersModule, // User management (CRUD operations)
-    AuthModule, // Authentication (login, register, JWT)
-    StoresModule, // Store/Vendor management (CRUD operations)
-    ProductsModule, // Product catalog (CRUD operations)
-    OrdersModule, // Order management (CRUD operations)
-    ReviewsModule, // Product reviews and ratings
-    NotificationsModule, // Buyer notifications
-    CouponsModule, // Seller coupon management
-    SocialImportModule, // Controlled demo Facebook/Instagram import lookups
+    UsersModule,
+    AuthModule,
+    StoresModule,
+    ProductsModule,
+    OrdersModule,
+    ReviewsModule,
+    NotificationsModule,
+    CouponsModule,
+    SocialImportModule,
   ],
 
-  controllers: [AppController], // Root controller
+  controllers: [AppController],
 
   providers: [
     AppService,
 
-    // Global JWT Authentication Guard
-    // This makes ALL routes protected by default
-    // Use @Public() decorator to make routes accessible without token
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
 
-    // Global Roles Authorization Guard
-    // Checks if authenticated user has required role
-    // Use @Roles(UserRole.VENDOR) decorator on routes that need specific roles
     {
       provide: APP_GUARD,
       useClass: RolesGuard,

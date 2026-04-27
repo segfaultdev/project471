@@ -1,7 +1,3 @@
-/**
- * StoresService - Business logic for store management
- * Handles all database operations for stores (CRUD)
- */
 import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -16,25 +12,16 @@ import { CreateOrderDto } from './dto/create-order.dto';
 @Injectable()
 export class StoresService {
   constructor(
-    // Inject TypeORM repository for Store entity
     @InjectRepository(Store)
     private storesRepository: Repository<Store>,
-    // Inject TypeORM repository for Product entity to manage cascade deletion
     @InjectRepository(Product)
     private productsRepository: Repository<Product>,
-    // Inject TypeORM repository for Order entity
     @InjectRepository(Order)
     private ordersRepository: Repository<Order>,
-    // Inject TypeORM repository for OrderItem entity
     @InjectRepository(OrderItem)
     private orderItemsRepository: Repository<OrderItem>,
   ) {}
 
-  /**
-   * Generate a URL-friendly slug from store name
-   * @param name - Store name
-   * @returns string - URL-safe slug
-   */
   private generateSlug(name: string): string {
     return name
       .toLowerCase()
@@ -44,12 +31,6 @@ export class StoresService {
       .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
   }
 
-  /**
-   * Ensure slug is unique by appending number if needed
-   * @param baseSlug - Base slug to check
-   * @param excludeId - Store ID to exclude from check (for updates)
-   * @returns Promise<string> - Unique slug
-   */
   private async ensureUniqueSlug(baseSlug: string, excludeId?: string): Promise<string> {
     let slug = baseSlug;
     let counter = 1;
@@ -68,14 +49,7 @@ export class StoresService {
     }
   }
 
-  /**
-   * Create a new store
-   * @param createStoreDto - Store data to create
-   * @returns Promise<Store> - The created store
-   * SQL: INSERT INTO stores (...) VALUES (...)
-   */
   async create(createStoreDto: CreateStoreDto): Promise<Store> {
-    // Generate unique slug from store name
     const baseSlug = this.generateSlug(createStoreDto.name);
     const slug = await this.ensureUniqueSlug(baseSlug);
 
@@ -86,26 +60,16 @@ export class StoresService {
     return this.storesRepository.save(store);
   }
 
-  /**
-   * Get all stores from database
-   * @returns Promise<Store[]> - Array of all stores
-   * SQL: SELECT * FROM stores
-   */
   async findAll(): Promise<Store[]> {
     const stores = await this.storesRepository.find({
       relations: ['owner'], // Include owner information
     });
     
-    // Auto-generate slugs for existing stores that don't have them
     await this.generateMissingSlugs(stores);
     
     return stores;
   }
 
-  /**
-   * Generate slugs for stores that don't have them
-   * @param stores - Array of stores to check
-   */
   private async generateMissingSlugs(stores: Store[]): Promise<void> {
     for (const store of stores) {
       if (!store.slug) {
@@ -117,12 +81,6 @@ export class StoresService {
     }
   }
 
-  /**
-   * Find a single store by ID
-   * @param id - Store's UUID
-   * @returns Promise<Store | null> - Store object or null if not found
-   * SQL: SELECT * FROM stores WHERE id = ?
-   */
   async findOne(id: string): Promise<Store | null> {
     return this.storesRepository.findOne({
       where: { id },
@@ -130,12 +88,6 @@ export class StoresService {
     });
   }
 
-  /**
-   * Find a single store by slug
-   * @param slug - Store's unique slug
-   * @returns Promise<Store | null> - Store object or null if not found
-   * SQL: SELECT * FROM stores WHERE slug = ?
-   */
   async findBySlug(slug: string): Promise<Store | null> {
     return this.storesRepository.findOne({
       where: { slug },
@@ -143,33 +95,18 @@ export class StoresService {
     });
   }
 
-  /**
-   * Find stores by owner ID
-   * @param ownerId - User's UUID
-   * @returns Promise<Store[]> - Array of stores owned by user
-   * SQL: SELECT * FROM stores WHERE ownerId = ?
-   */
   async findByOwner(ownerId: string): Promise<Store[]> {
     const stores = await this.storesRepository.find({
       where: { ownerId },
       relations: ['owner'],
     });
     
-    // Auto-generate slugs for existing stores that don't have them
     await this.generateMissingSlugs(stores);
     
     return stores;
   }
 
-  /**
-   * Update an existing store
-   * @param id - Store's UUID
-   * @param updateStoreDto - Fields to update
-   * @returns Promise<Store | null> - Updated store or null if not found
-   * SQL: UPDATE stores SET ... WHERE id = ?
-   */
   async update(id: string, updateStoreDto: UpdateStoreDto): Promise<Store | null> {
-    // If name is being updated, regenerate slug
     if (updateStoreDto.name) {
       const baseSlug = this.generateSlug(updateStoreDto.name);
       const slug = await this.ensureUniqueSlug(baseSlug, id);
@@ -180,30 +117,16 @@ export class StoresService {
     return this.findOne(id);
   }
 
-  /**
-   * Delete a store from database
-   * First deletes all products associated with the store to avoid foreign key constraint violation
-   * @param id - Store's UUID
-   * @returns Promise<void>
-   * SQL: DELETE FROM products WHERE storeId = ?; DELETE FROM stores WHERE id = ?
-   */
   async remove(id: string): Promise<void> {
-    // First, delete all products associated with this store
     await this.productsRepository.delete({ storeId: id });
     
-    // Then delete the store
     await this.storesRepository.delete(id);
   }
 
-  // ========== ORDER METHODS ==========
 
-  /**
-   * Create a new order
-   */
   async createOrder(createOrderDto: CreateOrderDto): Promise<Order> {
     const { customerId, storeId, items, shippingCity, shippingArea, shippingAddress } = createOrderDto;
 
-    // Calculate total amount
     const totalAmount = items.reduce(
       (sum, item) => sum + item.quantity * item.unitPrice,
       0,
@@ -221,7 +144,6 @@ export class StoresService {
 
     const savedOrder = await this.ordersRepository.save(order);
 
-    // Create order items
     const orderItems = items.map((item) => {
       return this.orderItemsRepository.create({
         orderId: savedOrder.id,
@@ -241,9 +163,6 @@ export class StoresService {
     return createdOrder;
   }
 
-  /**
-   * Get all orders
-   */
   async findAllOrders(): Promise<Order[]> {
     return this.ordersRepository.find({
       relations: ['items', 'items.product', 'store', 'customer'],
@@ -251,9 +170,6 @@ export class StoresService {
     });
   }
 
-  /**
-   * Get order by ID
-   */
   async findOrderById(id: string): Promise<Order | null> {
     return this.ordersRepository.findOne({
       where: { id },
@@ -261,9 +177,6 @@ export class StoresService {
     });
   }
 
-  /**
-   * Get orders by store
-   */
   async findOrdersByStore(storeId: string): Promise<Order[]> {
     return this.ordersRepository.find({
       where: { storeId },
@@ -272,17 +185,11 @@ export class StoresService {
     });
   }
 
-  /**
-   * Update order status
-   */
   async updateOrderStatus(id: string, status: OrderStatus): Promise<Order | null> {
     await this.ordersRepository.update(id, { status });
     return this.findOrderById(id);
   }
 
-  /**
-   * Get daily sales for a store
-   */
   async getDailySales(storeId: string, date: Date): Promise<number> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
@@ -303,9 +210,6 @@ export class StoresService {
     return parseFloat(result?.total || '0');
   }
 
-  /**
-   * Get best selling products for a store
-   */
   async getBestSellingProducts(storeId: string, limit: number = 10): Promise<any[]> {
     return this.orderItemsRepository
       .createQueryBuilder('item')
@@ -324,9 +228,6 @@ export class StoresService {
       .getRawMany();
   }
 
-  /**
-   * Get return rate for a store
-   */
   async getReturnRate(storeId: string): Promise<number> {
     const totalOrders = await this.ordersRepository
       .createQueryBuilder('order')
@@ -347,9 +248,6 @@ export class StoresService {
     return (returnedOrders / totalOrders) * 100;
   }
 
-  /**
-   * Get store statistics
-   */
   async getStoreStats(storeId: string): Promise<any> {
     const totalOrders = await this.ordersRepository.count({
       where: { storeId },
@@ -376,9 +274,6 @@ export class StoresService {
     };
   }
 
-  /**
-   * Get orders by location (city)
-   */
   async getOrdersByLocation(storeId: string): Promise<any[]> {
     const orders = await this.ordersRepository
       .createQueryBuilder('order')
@@ -390,7 +285,6 @@ export class StoresService {
       .orderBy('COUNT(*)', 'DESC')
       .getRawMany();
 
-    // Calculate total for percentage
     const total = orders.reduce((sum, item) => sum + parseInt(item.orderCount), 0);
 
     return orders.map(item => ({

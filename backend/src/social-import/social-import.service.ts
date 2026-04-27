@@ -26,8 +26,6 @@ type DemoSocialProduct = {
 const DEMO_NOT_FOUND_MESSAGE =
   'Demo social data not found. Please use one of the demo links.';
 
-// Demo social import data for the MVP because real Facebook/Instagram scraping
-// is restricted and unreliable. These files are fixed lookup tables, not scrapers.
 const demoSocialStores = require('../../data/demoSocialStores') as Record<
   string,
   DemoSocialStore

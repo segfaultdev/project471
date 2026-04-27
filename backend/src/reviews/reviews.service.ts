@@ -1,11 +1,3 @@
-/**
- * ReviewsService - Business logic for product reviews
- * Handles:
- * - Creating reviews (with purchase verification)
- * - Getting reviews for products
- * - Calculating average ratings
- * - Updating/deleting reviews
- */
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
@@ -28,9 +20,6 @@ export class ReviewsService {
     private usersRepository: Repository<User>,
   ) {}
 
-  /**
-   * Verify if user has purchased the product with a confirmed order
-   */
   async verifyPurchase(userId: string, productId: string): Promise<boolean> {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
@@ -52,7 +41,6 @@ export class ReviewsService {
       relations: ['customer'],
     });
 
-    // Check if any order contains this product
     for (const order of orders) {
       const belongsToUser =
         order.customer?.id === userId ||
@@ -73,18 +61,13 @@ export class ReviewsService {
     return false;
   }
 
-  /**
-   * Create a new review (only for verified purchasers)
-   */
   async create(userId: string, createReviewDto: CreateReviewDto): Promise<Review> {
-    // Verify purchase first
     const hasPurchased = await this.verifyPurchase(userId, createReviewDto.productId);
     
     if (!hasPurchased) {
       throw new ForbiddenException('You can only review products you have purchased');
     }
 
-    // Check if user already reviewed this product
     const existingReview = await this.reviewsRepository.findOne({
       where: {
         userId,
@@ -103,15 +86,11 @@ export class ReviewsService {
 
     const savedReview = await this.reviewsRepository.save(review);
 
-    // Update product's average rating and review count
     await this.updateProductRating(createReviewDto.productId);
 
     return savedReview;
   }
 
-  /**
-   * Get all reviews for a product
-   */
   async findByProduct(productId: string): Promise<Review[]> {
     return this.reviewsRepository.find({
       where: { productId },
@@ -120,9 +99,6 @@ export class ReviewsService {
     });
   }
 
-  /**
-   * Get a single review by ID
-   */
   async findOne(id: string): Promise<Review> {
     const review = await this.reviewsRepository.findOne({
       where: { id },
@@ -136,9 +112,6 @@ export class ReviewsService {
     return review;
   }
 
-  /**
-   * Update a review (only by the review author)
-   */
   async update(id: string, userId: string, updateReviewDto: UpdateReviewDto): Promise<Review> {
     const review = await this.findOne(id);
 
@@ -149,15 +122,11 @@ export class ReviewsService {
     Object.assign(review, updateReviewDto);
     const savedReview = await this.reviewsRepository.save(review);
 
-    // Update product's average rating
     await this.updateProductRating(review.productId);
 
     return savedReview;
   }
 
-  /**
-   * Delete a review (only by the review author)
-   */
   async remove(id: string, userId: string): Promise<void> {
     const review = await this.findOne(id);
 
@@ -168,13 +137,9 @@ export class ReviewsService {
     const productId = review.productId;
     await this.reviewsRepository.remove(review);
 
-    // Update product's average rating
     await this.updateProductRating(productId);
   }
 
-  /**
-   * Update product's average rating and review count
-   */
   private async updateProductRating(productId: string): Promise<void> {
     const ratingData = await this.getAverageRating(productId);
     
@@ -184,9 +149,6 @@ export class ReviewsService {
     });
   }
 
-  /**
-   * Get average rating for a product
-   */
   async getAverageRating(productId: string): Promise<{ average: number; count: number }> {
     const result = await this.reviewsRepository
       .createQueryBuilder('review')
@@ -201,9 +163,6 @@ export class ReviewsService {
     };
   }
 
-  /**
-   * Get user's review for a product
-   */
   async getUserReviewForProduct(userId: string, productId: string): Promise<Review | null> {
     return this.reviewsRepository.findOne({
       where: { userId, productId },

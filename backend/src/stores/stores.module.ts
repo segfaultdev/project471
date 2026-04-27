@@ -1,11 +1,3 @@
-/**
- * StoresModule - Configures everything related to stores
- * This module:
- * 1. Registers the Store entity with TypeORM (for database operations)
- * 2. Declares the StoresController (handles HTTP requests)
- * 3. Provides the StoresService (business logic)
- * 4. Exports StoresService (so other modules can use it)
- */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Store } from './entities/store.entity';
@@ -17,7 +9,6 @@ import { StoresController } from './stores.controller';
 
 @Module({
   imports: [
-    // Register Store, Product, Order, and OrderItem entities
     TypeOrmModule.forFeature([Store, Product, Order, OrderItem])
   ],
   controllers: [StoresController], // Register HTTP routes

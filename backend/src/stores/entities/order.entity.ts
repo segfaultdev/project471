@@ -1,6 +1,3 @@
-/**
- * Order Entity - Database table for orders
- */
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { OrderItem } from './order-item.entity';
 import { User } from '../../users/entities/user.entity';
@@ -42,7 +39,6 @@ export class Order {
   })
   status: OrderStatus;
 
-  // Shipping address
   @Column({ nullable: true })
   shippingCity: string;
 

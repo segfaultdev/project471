@@ -264,7 +264,6 @@ const MyProducts = () => {
       }
 
       resetForm();
-      // Always refresh products for the currently selected store
       await fetchProducts(selectedStoreId);
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {

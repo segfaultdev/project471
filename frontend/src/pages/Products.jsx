@@ -63,7 +63,7 @@ const Products = () => {
                 key={product.id}
                 className="group rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-md transition-all duration-200 hover:border-slate-300 hover:shadow-lg"
               >
-                {/* Product Image */}
+                
                 <div className="h-48 w-full bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden flex items-center justify-center">
                   {product.images && product.images.length > 0 ? (
                     <img 

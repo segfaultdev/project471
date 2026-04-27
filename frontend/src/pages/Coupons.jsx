@@ -28,19 +28,16 @@ export default function Coupons() {
     e.preventDefault();
 
     try {
-      // ✅ REQUIRED FIELD CHECK
       if (!form.code || !form.discountValue || !form.storeId) {
         alert('Please fill all required fields');
         return;
       }
 
-      // ✅ NEW FIX: prevent zero/negative
       if (Number(form.discountValue) <= 0) {
         alert('Discount must be greater than 0');
         return;
       }
 
-      // ✅ PERCENTAGE LIMIT
       if (
         form.discountType === 'percentage' &&
         Number(form.discountValue) > 100

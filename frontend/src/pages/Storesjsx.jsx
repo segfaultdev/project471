@@ -43,8 +43,6 @@ const Stores = () => {
       const response = await storesAPI.getAll();
       const storesData = normalizeArrayResponse(response);
 
-      // Hide inactive stores if backend provides isActive.
-      // If isActive is undefined, keep the store visible for compatibility.
       const visibleStores = storesData.filter((store) => store.isActive !== false);
 
       setStores(visibleStores);

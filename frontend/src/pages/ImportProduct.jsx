@@ -95,7 +95,6 @@ const ImportProduct = () => {
             ? ""
             : importedProduct.stock.toString(),
         category: importedProduct.category || "",
-        // Always use the currently selected store, not the stale product.storeId
         storeId: selectedStoreId,
         image: importedProduct.image || "",
         caption: importedProduct.caption || "",
@@ -214,7 +213,7 @@ const ImportProduct = () => {
   return (
     <div className="min-h-screen bg-[#f6f1e7]">
       <div className="mx-auto max-w-4xl px-6 py-10 lg:px-8">
-        {/* Header */}
+        
         <section className="relative overflow-hidden rounded-[2.5rem] bg-emerald-950 p-8 text-white shadow-[0_30px_100px_rgba(8,28,21,0.2)] md:p-10">
           <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-lime-300/20 blur-3xl" />
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -289,7 +288,7 @@ const ImportProduct = () => {
           </div>
         )}
 
-        {/* Import Section */}
+        
         <section className="mt-8 rounded-[2rem] border border-emerald-950/10 bg-white/85 p-8 shadow-sm backdrop-blur">
           <div className="flex items-start gap-4 mb-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-950 text-lime-300">
@@ -339,7 +338,7 @@ const ImportProduct = () => {
           </p>
         </section>
 
-        {/* Product Form */}
+        
         {product.name && (
           <form
             onSubmit={handleSubmit}
@@ -477,7 +476,7 @@ const ImportProduct = () => {
                 </select>
               </div>
 
-              {/* Product Image Section */}
+              
               <div className="border-t border-emerald-950/10 pt-6 mt-6">
                 <h3 className="text-lg font-black text-emerald-950 mb-4">
                   Product Image

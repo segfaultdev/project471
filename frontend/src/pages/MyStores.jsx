@@ -253,8 +253,6 @@ const MyStores = () => {
     try {
       const payload = {
         ...formData,
-        // Keep socialLink in payload only if your backend supports it.
-        // It is harmless for many APIs, but remove it in api.js if your backend rejects unknown fields.
       };
 
       if (editingStore) {
@@ -653,14 +651,14 @@ const MyStores = () => {
             {stores.map((store) => (
               <article
                 key={store.id}
-                className="overflow-hidden rounded-[2rem] border border-emerald-950/10 bg-white/85 shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-2xl"
+                className="group overflow-hidden rounded-[2rem] border border-emerald-950/10 bg-white/90 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_70px_rgba(8,28,21,0.2)]"
               >
-                <div className="relative h-40 overflow-hidden bg-gradient-to-br from-emerald-100 via-lime-100 to-amber-100">
+                <div className="relative h-44 overflow-hidden bg-gradient-to-br from-emerald-100 via-lime-100 to-amber-100">
                   {store.banner ? (
                     <img
                       src={store.banner}
                       alt={`${store.name} banner`}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-emerald-950/35">
@@ -668,36 +666,43 @@ const MyStores = () => {
                     </div>
                   )}
 
-                  <span className={`absolute right-4 top-4 rounded-full px-3 py-1 text-xs font-black ${
-                    store.isActive ? "bg-lime-300 text-emerald-950" : "bg-white text-emerald-950"
+                  <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/45 via-transparent to-transparent" />
+
+                  <span className={`absolute right-4 top-4 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-black ${
+                    store.isActive
+                      ? "bg-lime-300 text-emerald-950"
+                      : "bg-white/90 text-emerald-950"
                   }`}>
+                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
                     {store.isActive ? "Active" : "Inactive"}
                   </span>
                 </div>
 
-                <div className="p-6">
-                  <div className="-mt-14 mb-4 flex items-end gap-4">
-                    <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[1.5rem] border-4 border-white bg-emerald-950 text-lime-300 shadow-lg">
+                <div className="relative p-6">
+                  <div className="-mt-16 mb-5 flex items-end gap-4">
+                    <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[1.5rem] border-[5px] border-white bg-emerald-950 text-lime-300 shadow-[0_10px_30px_rgba(8,28,21,0.25)]">
                       {store.logo ? (
                         <img src={store.logo} alt={`${store.name} logo`} className="h-full w-full object-cover" />
                       ) : (
                         <Store className="h-9 w-9" />
                       )}
                     </div>
-                    <div className="min-w-0 pb-2">
-                      <h3 className="truncate text-2xl font-black text-emerald-950">{store.name}</h3>
-                      <p className="mt-1 text-sm font-bold text-emerald-950/55">
+                    <div className="min-w-0 pb-1.5">
+                      <h3 className="truncate text-2xl font-black tracking-tight text-emerald-950">
+                        {store.name}
+                      </h3>
+                      <p className="mt-1 inline-flex rounded-full bg-[#f6f1e7] px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-emerald-950/70">
                         {store.category || "Uncategorized"}
                       </p>
                     </div>
                   </div>
 
-                  <p className="line-clamp-3 min-h-18 font-semibold leading-7 text-emerald-950/65">
+                  <p className="line-clamp-3 min-h-[84px] text-[15px] font-semibold leading-7 text-emerald-950/65">
                     {store.description || "No description added yet."}
                   </p>
 
-                  <div className="mt-5 rounded-[1.5rem] bg-[#f6f1e7] p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-950/50">
+                  <div className="mt-5 rounded-[1.25rem] border border-emerald-950/10 bg-[#f6f1e7] p-4">
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-950/45">
                       Store URL
                     </p>
                     {store.slug ? (
@@ -705,7 +710,7 @@ const MyStores = () => {
                         to={`/store/${store.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-2 inline-flex max-w-full items-center gap-2 truncate font-black text-emerald-950 transition hover:text-emerald-700"
+                        className="mt-2 inline-flex max-w-full items-center gap-2 truncate text-sm font-black text-emerald-950 transition hover:text-emerald-700"
                       >
                         <span className="truncate">{getStoreUrl(store)}</span>
                         <ExternalLink className="h-4 w-4 shrink-0" />
@@ -715,37 +720,37 @@ const MyStores = () => {
                     )}
                   </div>
 
-                  <div className="mt-5 space-y-2 text-sm font-semibold text-emerald-950/65">
+                  <div className="mt-5 space-y-2.5 text-sm font-semibold text-emerald-950/70">
                     {store.address && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-emerald-950" />
+                      <div className="flex items-center gap-2 rounded-xl bg-[#f6f1e7] px-3 py-2">
+                        <MapPin className="h-4 w-4 shrink-0 text-emerald-950" />
                         <span className="truncate">{store.address}</span>
                       </div>
                     )}
                     {store.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-emerald-950" />
+                      <div className="flex items-center gap-2 rounded-xl bg-[#f6f1e7] px-3 py-2">
+                        <Phone className="h-4 w-4 shrink-0 text-emerald-950" />
                         <span>{store.phone}</span>
                       </div>
                     )}
                     {store.email && (
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-emerald-950" />
+                      <div className="flex items-center gap-2 rounded-xl bg-[#f6f1e7] px-3 py-2">
+                        <Mail className="h-4 w-4 shrink-0 text-emerald-950" />
                         <span className="truncate">{store.email}</span>
                       </div>
                     )}
                   </div>
 
-                  <div className="mt-6 flex gap-3">
+                  <div className="mt-6 grid grid-cols-2 gap-3">
                     <button
                       onClick={() => handleEdit(store)}
-                      className="flex-1 rounded-full bg-lime-300 px-4 py-3 font-black text-emerald-950 transition hover:bg-lime-200"
+                      className="rounded-full bg-lime-300 px-4 py-3 font-black text-emerald-950 transition hover:bg-lime-200"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => setDeleteTarget(store)}
-                      className="flex-1 rounded-full bg-red-100 px-4 py-3 font-black text-red-700 transition hover:bg-red-200"
+                      className="rounded-full bg-red-100 px-4 py-3 font-black text-red-700 transition hover:bg-red-200"
                     >
                       Delete
                     </button>

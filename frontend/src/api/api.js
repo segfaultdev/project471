@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Create axios instance with base configuration
 const api = axios.create({
   baseURL: "http://localhost:3000", // Your NestJS backend URL
   headers: {
@@ -8,13 +7,10 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - Attach JWT token to every request
 api.interceptors.request.use(
   (config) => {
-    // Get token from localStorage
     const token = localStorage.getItem("token");
 
-    // If token exists, add to Authorization header
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -26,11 +22,9 @@ api.interceptors.request.use(
   },
 );
 
-// Response interceptor - Handle errors globally
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // If 401 Unauthorized, clear token and redirect to login
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
@@ -41,14 +35,12 @@ api.interceptors.response.use(
   },
 );
 
-// Auth API calls
 export const authAPI = {
   register: (userData) => api.post("/auth/register", userData),
   login: (credentials) => api.post("/auth/login", credentials),
   getProfile: () => api.get("/auth/profile"),
 };
 
-// Users API calls
 export const usersAPI = {
   getAll: () => api.get("/users"),
   getOne: (id) => api.get(`/users/${id}`),
@@ -57,7 +49,6 @@ export const usersAPI = {
   delete: (id) => api.delete(`/users/${id}`),
 };
 
-// Stores API calls
 export const storesAPI = {
   getAll: () => api.get("/stores"),
   getOne: (id) => api.get(`/stores/${id}`),
@@ -69,7 +60,6 @@ export const storesAPI = {
   delete: (id) => api.delete(`/stores/${id}`),
 };
 
-// Products API calls
 export const productsAPI = {
   getAll: () => api.get("/products"),
   getOne: (id) => api.get(`/products/${id}`),
@@ -81,13 +71,11 @@ export const productsAPI = {
   delete: (id) => api.delete(`/products/${id}`),
 };
 
-// Demo social import API calls
 export const importAPI = {
   importSocialStore: (url) => api.post("/api/import/social-store", { url }),
   importSocialProduct: (url) => api.post("/api/import/social-product", { url }),
 };
 
-// Orders API calls
 export const ordersAPI = {
   create: (orderData) => api.post("/stores/orders", orderData),
   getAll: () => api.get("/stores/orders"),
@@ -95,14 +83,14 @@ export const ordersAPI = {
   getByStore: (storeId) => api.get(`/stores/${storeId}/orders`),
   getMyOrders: (storeId) => api.get(`/stores/${storeId}/orders`),
   updateStatus: (id, statusOrPayload) => {
+    const normalizedId = String(id || "").replace(/^\/?orders\//, "");
     const payload =
       typeof statusOrPayload === "string"
         ? { status: statusOrPayload }
         : statusOrPayload;
-    return api.patch(`/stores/orders/${id}/status`, payload);
+    return api.patch(`/stores/orders/${normalizedId}/status`, payload);
   },
 
-  // Sales Analytics
   getDailySales: (storeId, date) =>
     api.get(`/stores/${storeId}/orders/stats/daily?date=${date}`),
   getBestSellers: (storeId) =>
@@ -115,7 +103,6 @@ export const ordersAPI = {
     api.get(`/stores/${storeId}/orders/stats/location`),
 };
 
-// Coupons API
 export const couponsAPI = {
   getAll: () => api.get("/coupons"),
   getByStore: (storeId) => api.get(`/coupons/store/${storeId}`),
@@ -124,7 +111,6 @@ export const couponsAPI = {
   delete: (id) => api.delete(`/coupons/${id}`),
 };
 
-// Notifications API
 export const notificationsAPI = {
   getAll: () => api.get("/notifications"),
   getByBuyer: (buyerId) => api.get(`/notifications/buyer/${buyerId}`),
@@ -132,7 +118,6 @@ export const notificationsAPI = {
   delete: (id) => api.delete(`/notifications/${id}`),
 };
 
-// Reviews API calls
 export const reviewsAPI = {
   create: (reviewData) => api.post("/reviews", reviewData),
   getByProduct: (productId) => api.get(`/reviews/product/${productId}`),

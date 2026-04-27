@@ -1,7 +1,3 @@
-/**
- * Review Entity - Defines the database table structure for product reviews
- * Buyers can only leave reviews after a confirmed purchase
- */
 import {
   Entity,
   PrimaryGeneratedColumn,

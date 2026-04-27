@@ -18,7 +18,6 @@ export class OrdersService {
   ) {}
 
   async create(createOrderDto: CreateOrderDto, customerId: string): Promise<Order> {
-    // Verify store exists
     const store = await this.storesRepository.findOne({
       where: { id: createOrderDto.storeId },
     });
@@ -35,7 +34,6 @@ export class OrdersService {
       throw new NotFoundException('Customer not found');
     }
 
-    // Generate order number
     const orderNumber = this.generateOrderNumber();
 
     const order = this.ordersRepository.create({

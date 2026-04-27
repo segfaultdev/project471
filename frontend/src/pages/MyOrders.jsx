@@ -20,6 +20,63 @@ const MyOrders = () => {
   const [selectedStoreId, setSelectedStoreId] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [updatingOrder, setUpdatingOrder] = useState(null);
+  const [operationMessage, setOperationMessage] = useState(null);
+
+  const normalizeOrderItem = (item) => {
+    const quantity = Number(item?.quantity || 0);
+    const unitPrice = Number(
+      item?.price ??
+        item?.unitPrice ??
+        (quantity > 0 ? Number(item?.subtotal || 0) / quantity : 0),
+    );
+
+    return {
+      ...item,
+      name: item?.name || item?.product?.name || "Product",
+      image: item?.image || item?.product?.images?.[0] || null,
+      quantity,
+      price: unitPrice,
+    };
+  };
+
+  const normalizeOrder = (order) => {
+    const items = Array.isArray(order?.items)
+      ? order.items.map(normalizeOrderItem)
+      : [];
+
+    const computedSubtotal = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+
+    const shipping = Number(order?.shipping ?? 0);
+    const tax = Number(order?.tax ?? 0);
+    const subtotal = Number(order?.subtotal ?? order?.totalAmount ?? computedSubtotal);
+    const total = Number(order?.total ?? order?.totalAmount ?? subtotal + shipping + tax);
+
+    const firstName = order?.customerInfo?.firstName || order?.customer?.firstName || "Customer";
+    const lastName = order?.customerInfo?.lastName || order?.customer?.lastName || "";
+
+    return {
+      ...order,
+      orderNumber: order?.orderNumber || order?.id?.slice(0, 8)?.toUpperCase() || "N/A",
+      items,
+      subtotal,
+      shipping,
+      tax,
+      total,
+      paymentMethod: order?.paymentMethod || "cod",
+      customerInfo: {
+        firstName,
+        lastName,
+        email: order?.customerInfo?.email || order?.customer?.email || "N/A",
+        phone: order?.customerInfo?.phone || order?.customer?.phone || "N/A",
+        address: order?.customerInfo?.address || order?.shippingAddress || "N/A",
+        city: order?.customerInfo?.city || order?.shippingCity || "N/A",
+        postalCode: order?.customerInfo?.postalCode || order?.shippingArea || "N/A",
+      },
+    };
+  };
 
   useEffect(() => {
     fetchStores();
@@ -51,6 +108,10 @@ const MyOrders = () => {
       );
     } catch (error) {
       console.error("Failed to fetch stores:", error);
+      setOperationMessage({
+        type: "error",
+        text: "Failed to load stores. Please refresh and try again.",
+      });
       setLoading(false);
     }
   };
@@ -63,20 +124,24 @@ const MyOrders = () => {
       const response = await ordersAPI.getByStore(storeId);
       let ordersData = response.data || response;
 
-      // Filter by status if needed
+      ordersData = (Array.isArray(ordersData) ? ordersData : []).map(normalizeOrder);
+
       if (statusFilter !== "all") {
         ordersData = ordersData.filter(
           (order) => order.status === statusFilter,
         );
       }
 
-      // Sort by creation date (newest first)
       ordersData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       setOrders(ordersData);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
       setOrders([]);
+      setOperationMessage({
+        type: "error",
+        text: "Failed to load orders for this store.",
+      });
     } finally {
       setLoading(false);
     }
@@ -87,15 +152,21 @@ const MyOrders = () => {
       setUpdatingOrder(orderId);
       await ordersAPI.updateStatus(orderId, newStatus);
 
-      // Update local state
       setOrders(
         orders.map((order) =>
           order.id === orderId ? { ...order, status: newStatus } : order,
         ),
       );
+      setOperationMessage({
+        type: "success",
+        text: `Order status updated to ${newStatus}.`,
+      });
     } catch (error) {
       console.error("Failed to update order status:", error);
-      alert("Failed to update order status. Please try again.");
+      setOperationMessage({
+        type: "error",
+        text: "Failed to update order status. Please try again.",
+      });
     } finally {
       setUpdatingOrder(null);
     }
@@ -181,7 +252,7 @@ const MyOrders = () => {
   return (
     <div className="min-h-screen bg-[#f6f1e7]">
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-        {/* Header */}
+        
         <section className="relative overflow-hidden rounded-[2.5rem] bg-emerald-950 p-8 text-white shadow-[0_30px_100px_rgba(8,28,21,0.2)] md:p-10">
           <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-lime-300/20 blur-3xl" />
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -200,7 +271,7 @@ const MyOrders = () => {
           </div>
         </section>
 
-        {/* Filters */}
+        
         <section className="mt-8 rounded-[2rem] border border-emerald-950/10 bg-white/85 p-5 shadow-sm backdrop-blur">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -244,10 +315,7 @@ const MyOrders = () => {
               >
                 <option value="all">All Orders</option>
                 <option value="pending">Pending</option>
-                <option value="processing">Processing</option>
-                <option value="shipped">Shipped</option>
                 <option value="completed">Completed</option>
-                <option value="delivered">Delivered</option>
                 <option value="cancelled">Cancelled</option>
                 <option value="returned">Returned</option>
               </select>
@@ -255,7 +323,28 @@ const MyOrders = () => {
           </div>
         </section>
 
-        {/* Orders List */}
+        {operationMessage && (
+          <section
+            className={`mt-6 rounded-2xl border px-5 py-4 text-sm font-semibold ${
+              operationMessage.type === "success"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-red-200 bg-red-50 text-red-800"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <p>{operationMessage.text}</p>
+              <button
+                type="button"
+                onClick={() => setOperationMessage(null)}
+                className="rounded-full px-3 py-1 text-xs font-black uppercase tracking-wide transition hover:bg-black/5"
+              >
+                Dismiss
+              </button>
+            </div>
+          </section>
+        )}
+
+        
         {loading ? (
           <div className="mt-8 rounded-[2rem] border border-emerald-950/10 bg-white/85 p-8 shadow-sm backdrop-blur">
             <div className="flex items-center justify-center py-12">
@@ -283,7 +372,7 @@ const MyOrders = () => {
                 key={order.id}
                 className="rounded-[2rem] border border-emerald-950/10 bg-white/85 p-6 shadow-sm backdrop-blur md:p-8"
               >
-                {/* Order Header */}
+                
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-950 text-lime-300">
@@ -310,7 +399,7 @@ const MyOrders = () => {
                   </div>
                 </div>
 
-                {/* Customer Info */}
+                
                 <div className="grid gap-5 md:grid-cols-2 mb-6">
                   <div className="rounded-2xl bg-[#f6f1e7] p-5">
                     <h4 className="font-black text-emerald-950 mb-3">
@@ -348,7 +437,7 @@ const MyOrders = () => {
                       </p>
                       <p>
                         <span className="text-emerald-950">Payment:</span>{" "}
-                        {order.paymentMethod.toUpperCase()}
+                        {String(order.paymentMethod || "N/A").toUpperCase()}
                       </p>
                       <p className="text-lg">
                         <span className="text-emerald-950">Total:</span>{" "}
@@ -358,7 +447,7 @@ const MyOrders = () => {
                   </div>
                 </div>
 
-                {/* Order Items */}
+                
                 <div className="mb-6">
                   <h4 className="font-black text-emerald-950 mb-4">
                     Order Items
@@ -392,7 +481,7 @@ const MyOrders = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
+                
                 <div className="flex items-center justify-between pt-5 border-t border-emerald-950/10">
                   <div className="text-sm font-semibold text-emerald-950/60">
                     <span className="text-emerald-950">Subtotal:</span> ৳
@@ -403,37 +492,6 @@ const MyOrders = () => {
                   </div>
                   <div className="flex gap-3">
                     {order.status === "pending" && (
-                      <button
-                        onClick={() =>
-                          updateOrderStatus(order.id, "processing")
-                        }
-                        disabled={updatingOrder === order.id}
-                        className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-3 font-black text-white transition hover:bg-blue-700 disabled:opacity-50"
-                      >
-                        {updatingOrder === order.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Package className="h-4 w-4" />
-                        )}
-                        Process
-                      </button>
-                    )}
-                    {order.status === "processing" && (
-                      <button
-                        onClick={() => updateOrderStatus(order.id, "shipped")}
-                        disabled={updatingOrder === order.id}
-                        className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-5 py-3 font-black text-white transition hover:bg-purple-700 disabled:opacity-50"
-                      >
-                        {updatingOrder === order.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Package className="h-4 w-4" />
-                        )}
-                        Ship
-                      </button>
-                    )}
-                    {(order.status === "processing" ||
-                      order.status === "shipped") && (
                       <button
                         onClick={() => updateOrderStatus(order.id, "completed")}
                         disabled={updatingOrder === order.id}
@@ -449,7 +507,6 @@ const MyOrders = () => {
                     )}
                     {order.status !== "completed" &&
                       order.status !== "cancelled" &&
-                      order.status !== "delivered" &&
                       order.status !== "returned" && (
                         <button
                           onClick={() =>

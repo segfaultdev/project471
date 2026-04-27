@@ -1,6 +1,3 @@
-/**
- * SalesAnalytics - Sales analytics page for sellers
- */
 import { useState, useEffect } from 'react';
 import { ordersAPI, storesAPI } from '../api/api';
 import { Loader2, TrendingUp, TrendingDown, Package, DollarSign, Percent, MapPin } from 'lucide-react';
@@ -38,7 +35,6 @@ const SalesAnalytics = () => {
         return;
       }
 
-      // Fallback for demo/dev environments where account has no owned stores yet.
       const allStoresResponse = await storesAPI.getAll();
       const allStoresData = allStoresResponse.data || allStoresResponse;
       setStores(allStoresData);
@@ -138,7 +134,7 @@ const SalesAnalytics = () => {
           )}
         </div>
 
-        {/* Store Selector & Date Picker */}
+        
         <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
             <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Store</p>
@@ -166,7 +162,7 @@ const SalesAnalytics = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
@@ -211,7 +207,7 @@ const SalesAnalytics = () => {
           </div>
         </div>
 
-        {/* Best Selling Products */}
+        
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm mb-6">
           <h2 className="text-xl font-bold text-slate-900 mb-4">Best Selling Products</h2>
           <div className="overflow-x-auto">
@@ -242,7 +238,7 @@ const SalesAnalytics = () => {
           </div>
         </div>
 
-        {/* Orders by Location */}
+        
         <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <MapPin className="h-5 w-5 text-blue-600" />

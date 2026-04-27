@@ -1,10 +1,3 @@
-/**
- * ReviewsModule - Module for product reviews functionality
- * Handles:
- * - Review entity and database operations
- * - Purchase verification before allowing reviews
- * - Rating calculations
- */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Review } from './entities/review.entity';

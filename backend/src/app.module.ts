@@ -27,32 +27,21 @@ import { CouponsModule } from './coupons/coupons.module';
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const dbType = (configService.get<string>('DB_TYPE') || 'sqlite').toLowerCase();
         const isProduction = (configService.get<string>('NODE_ENV') || '').toLowerCase() === 'production';
         const synchronize = (configService.get<string>('DB_SYNCHRONIZE') || (!isProduction).toString()) === 'true';
         const logging = (configService.get<string>('DB_LOGGING') || (!isProduction).toString()) === 'true';
 
-        if (dbType === 'postgres') {
-          return {
-            type: 'postgres' as const,
-            host: configService.get<string>('DB_HOST'),
-            port: parseInt(configService.get<string>('DB_PORT') || '5432', 10),
-            username: configService.get<string>('DB_USERNAME'),
-            password: configService.get<string>('DB_PASSWORD'),
-            database: configService.get<string>('DB_DATABASE'),
-            ssl:
-              (configService.get<string>('DB_SSL') || 'false') === 'true'
-                ? { rejectUnauthorized: false }
-                : false,
-            entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            synchronize,
-            logging,
-          };
-        }
-
         return {
-          type: 'sqlite' as const,
-          database: configService.get<string>('SQLITE_PATH') || 'database.sqlite',
+          type: 'postgres' as const,
+          host: configService.get<string>('DB_HOST'),
+          port: parseInt(configService.get<string>('DB_PORT') || '5432', 10),
+          username: configService.get<string>('DB_USERNAME'),
+          password: configService.get<string>('DB_PASSWORD'),
+          database: configService.get<string>('DB_DATABASE'),
+          ssl:
+            (configService.get<string>('DB_SSL') || 'false') === 'true'
+              ? { rejectUnauthorized: false }
+              : false,
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize,
           logging,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { productsAPI } from '../api/api';
-import { Package, Loader2 } from 'lucide-react';
+import { Package, Loader2, GitCompare } from 'lucide-react';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -98,7 +99,7 @@ const Products = () => {
                   <div className="flex flex-wrap gap-2 mb-4">
                     {product.category && (
                       <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                        {product.category}
+                        {product.category?.name || 'Uncategorized'}
                       </span>
                     )}
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -114,9 +115,16 @@ const Products = () => {
 
                   {product.store && (
                     <div className="pt-4 border-t border-slate-100">
-                      <p className="text-sm text-slate-600">
+                      <p className="text-sm text-slate-600 mb-3">
                         <span className="font-medium text-slate-900">Store:</span> {product.store.name}
                       </p>
+                      <Link
+                        to={`/compare/${product.id}`}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition-colors duration-200"
+                      >
+                        <GitCompare className="h-4 w-4" />
+                        Compare
+                      </Link>
                     </div>
                   )}
                 </div>

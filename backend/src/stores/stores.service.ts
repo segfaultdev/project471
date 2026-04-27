@@ -124,22 +124,17 @@ export class StoresService {
   }
 
 
-  async createOrder(createOrderDto: CreateOrderDto): Promise<Order> {
-    const { customerId, storeId, items, shippingCity, shippingArea, shippingAddress } = createOrderDto;
-
-    const totalAmount = items.reduce(
-      (sum, item) => sum + item.quantity * item.unitPrice,
-      0,
-    );
+  async createOrder(createOrderDto: CreateOrderDto, customerId?: string): Promise<Order> {
+    const { storeId, customerInfo, items, total } = createOrderDto;
 
     const order = this.ordersRepository.create({
-      customerId,
       storeId,
-      totalAmount,
+      customerId: customerId || undefined,
+      totalAmount: total,
       status: OrderStatus.PENDING,
-      shippingCity,
-      shippingArea,
-      shippingAddress,
+      shippingAddress: customerInfo.address,
+      shippingCity: customerInfo.city,
+      shippingArea: customerInfo.postalCode,
     });
 
     const savedOrder = await this.ordersRepository.save(order);
@@ -149,8 +144,8 @@ export class StoresService {
         orderId: savedOrder.id,
         productId: item.productId,
         quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        subtotal: item.quantity * item.unitPrice,
+        unitPrice: item.price,
+        subtotal: item.quantity * item.price,
       });
     });
 
@@ -162,6 +157,15 @@ export class StoresService {
     }
     return createdOrder;
   }
+
+  async findOrdersByCustomer(customerId: string): Promise<Order[]> {
+    return this.ordersRepository.find({
+      where: { customerId },
+      relations: ['items', 'items.product', 'store'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
 
   async findAllOrders(): Promise<Order[]> {
     return this.ordersRepository.find({

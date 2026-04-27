@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Store } from '../../stores/entities/store.entity';
+import { Category } from '../../categories/entities/category.entity';
 
 @Entity('products') // Creates table named 'products'
 export class Product {
@@ -18,8 +19,12 @@ export class Product {
   @Column({ default: 0 })
   stock: number;
 
+  @ManyToOne(() => Category, { eager: false, onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'categoryId' })
+  category: Category;
+
   @Column({ nullable: true })
-  category: string;
+  categoryId: string;
 
   @Column({ type: 'simple-json', nullable: true })
   images: string[];

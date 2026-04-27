@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { productsAPI, ordersAPI } from "../api/api";
+import { useAuth } from "../context/AuthContext";
 import {
   Loader2,
   ArrowLeft,
@@ -13,6 +14,7 @@ import {
   Package,
   AlertCircle,
   X,
+  Lock,
 } from "lucide-react";
 
 const formatCurrency = (amount) => `৳${Number(amount || 0).toLocaleString("en-BD")}`;
@@ -24,24 +26,20 @@ const paymentOptions = [
     helper: "Pay when your order is delivered.",
   },
   {
-    value: "bkash",
-    label: "bKash",
-    helper: "Mobile payment integration placeholder.",
+    value: "card",
+    label: "Card / bKash / Nagad",
+    helper: "Pay online via card or mobile banking.",
   },
   {
-    value: "nagad",
-    label: "Nagad",
-    helper: "Mobile payment integration placeholder.",
-  },
-  {
-    value: "sslcommerz",
-    label: "SSLCOMMERZ",
-    helper: "Card/mobile gateway integration placeholder.",
+    value: "bank",
+    label: "Bank Transfer",
+    helper: "Direct bank transfer — details sent after order.",
   },
 ];
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [cartItems, setCartItems] = useState([]);
   const [store, setStore] = useState(null);
@@ -50,10 +48,9 @@ const Checkout = () => {
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState("");
 
+  // firstName, lastName, email pre-filled from the logged-in user (read-only)
+  // phone, address, city, postalCode entered manually
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
     phone: "",
     address: "",
     city: "",
@@ -149,9 +146,6 @@ const Checkout = () => {
 
   const validateForm = () => {
     const requiredFields = [
-      ["firstName", "First name"],
-      ["lastName", "Last name"],
-      ["email", "Email"],
       ["phone", "Phone"],
       ["address", "Address"],
       ["city", "City"],
@@ -164,6 +158,11 @@ const Checkout = () => {
 
     if (missingFields.length > 0) {
       setFieldError(`Please fill in: ${missingFields.join(", ")}.`);
+      return false;
+    }
+
+    if (!user?.email || !user?.firstName || !user?.lastName) {
+      setFieldError("Your account info is incomplete. Please update your profile.");
       return false;
     }
 
@@ -183,9 +182,9 @@ const Checkout = () => {
       const orderData = {
         storeId: store.id,
         customerInfo: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
@@ -203,7 +202,6 @@ const Checkout = () => {
         tax: getTax(),
         total: getTotal(),
         paymentMethod: formData.paymentMethod,
-        status: "pending",
       };
 
       await ordersAPI.create(orderData);
@@ -212,7 +210,10 @@ const Checkout = () => {
       navigate("/checkout/success");
     } catch (err) {
       console.error("Checkout failed:", err);
-      setError(err.response?.data?.message || "Checkout failed. Please try again.");
+      const msg = err.response?.data?.message;
+      setError(
+        Array.isArray(msg) ? msg.join(" · ") : msg || "Checkout failed. Please try again.",
+      );
     } finally {
       setProcessing(false);
     }
@@ -283,72 +284,89 @@ const Checkout = () => {
 
         <form onSubmit={handleSubmit} className="grid gap-8 lg:grid-cols-[1fr_420px]">
           <section className="space-y-6">
+            {/* Customer info — auto-filled from account */}
             <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-neutral-100">
                   <User className="h-5 w-5" />
                 </div>
-                <h2 className="text-xl font-bold">Customer information</h2>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-neutral-700">First Name *</label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 outline-none transition focus:border-neutral-950 focus:bg-white"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-neutral-700">Last Name *</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 outline-none transition focus:border-neutral-950 focus:bg-white"
-                    required
-                  />
+                  <h2 className="text-xl font-bold">Customer information</h2>
+                  <p className="mt-0.5 text-xs text-neutral-500">Name and email are taken from your account</p>
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {/* Read-only account fields */}
+              <div className="mb-4 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-neutral-700">Email Address *</label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 py-3 pl-11 pr-4 outline-none transition focus:border-neutral-950 focus:bg-white"
-                      required
-                    />
-                  </div>
+                  <label className="mb-2 block text-sm font-semibold text-neutral-700">
+                    First Name
+                    <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">
+                      <Lock className="h-3 w-3" /> from account
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={user?.firstName || ""}
+                    readOnly
+                    className="w-full cursor-not-allowed rounded-2xl border border-neutral-200 bg-neutral-100 px-4 py-3 text-neutral-600 outline-none"
+                  />
                 </div>
-
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-neutral-700">Phone Number *</label>
-                  <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 py-3 pl-11 pr-4 outline-none transition focus:border-neutral-950 focus:bg-white"
-                      required
-                    />
-                  </div>
+                  <label className="mb-2 block text-sm font-semibold text-neutral-700">
+                    Last Name
+                    <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">
+                      <Lock className="h-3 w-3" /> from account
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={user?.lastName || ""}
+                    readOnly
+                    className="w-full cursor-not-allowed rounded-2xl border border-neutral-200 bg-neutral-100 px-4 py-3 text-neutral-600 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="mb-2 block text-sm font-semibold text-neutral-700">
+                  Email Address
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">
+                    <Lock className="h-3 w-3" /> from account
+                  </span>
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                  <input
+                    type="email"
+                    value={user?.email || ""}
+                    readOnly
+                    className="w-full cursor-not-allowed rounded-2xl border border-neutral-200 bg-neutral-100 py-3 pl-11 pr-4 text-neutral-600 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Manual field — phone */}
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-neutral-700">
+                  Phone Number <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    placeholder="e.g. 01700000000"
+                    className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 py-3 pl-11 pr-4 outline-none transition focus:border-neutral-950 focus:bg-white"
+                    required
+                  />
                 </div>
               </div>
             </div>
 
+            {/* Shipping address */}
             <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-neutral-100">
@@ -358,7 +376,9 @@ const Checkout = () => {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold text-neutral-700">Street Address *</label>
+                <label className="mb-2 block text-sm font-semibold text-neutral-700">
+                  Street Address <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="address"
@@ -372,30 +392,37 @@ const Checkout = () => {
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-neutral-700">City *</label>
+                  <label className="mb-2 block text-sm font-semibold text-neutral-700">
+                    City <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
                     className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 outline-none transition focus:border-neutral-950 focus:bg-white"
+                    placeholder="e.g. Dhaka"
                     required
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-neutral-700">Postal Code *</label>
+                  <label className="mb-2 block text-sm font-semibold text-neutral-700">
+                    Postal Code <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     name="postalCode"
                     value={formData.postalCode}
                     onChange={handleInputChange}
                     className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 outline-none transition focus:border-neutral-950 focus:bg-white"
+                    placeholder="e.g. 1207"
                     required
                   />
                 </div>
               </div>
             </div>
 
+            {/* Payment method */}
             <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
               <div className="mb-5 flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-neutral-100">
@@ -404,7 +431,7 @@ const Checkout = () => {
                 <h2 className="text-xl font-bold">Payment method</h2>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-3">
                 {paymentOptions.map((option) => (
                   <label
                     key={option.value}

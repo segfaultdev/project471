@@ -49,7 +49,11 @@ const StoreDetail = () => {
       products.filter((product) => {
         const name = product.name?.toLowerCase() || "";
         const description = product.description?.toLowerCase() || "";
-        const category = product.category?.toLowerCase() || "";
+        const category =
+          (typeof product.category === "string"
+            ? product.category
+            : product.category?.name
+          )?.toLowerCase() || "";
         return name.includes(query) || description.includes(query) || category.includes(query);
       }),
     );
@@ -365,6 +369,12 @@ const StoreDetail = () => {
                         {product.name}
                       </h3>
                     </Link>
+
+                    {(product.category?.name || product.category) && (
+                      <span className="mt-3 inline-flex rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-700">
+                        {product.category?.name || product.category}
+                      </span>
+                    )}
 
                     {product.description && (
                       <p className="mt-3 line-clamp-2 text-sm leading-6 text-neutral-600">{product.description}</p>

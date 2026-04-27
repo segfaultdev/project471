@@ -12,6 +12,7 @@ import MyStores from "./pages/MyStores";
 import MyProducts from "./pages/MyProducts";
 import Stores from "./pages/Stores";
 import StoreDetail from "./pages/StoreDetail";
+import ProductComparison from "./pages/ProductComparison";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
@@ -22,6 +23,7 @@ import Sell from "./pages/Sell";
 import ImportProduct from "./pages/ImportProduct";
 import BulkImport from "./pages/BulkImport";
 import MyOrders from "./pages/MyOrders";
+import CustomerOrders from "./pages/CustomerOrders";
 import Coupons from "./pages/Coupons";
 import Notifications from "./pages/Notifications";
 import SalesAnalytics from "./pages/SalesAnalytics";
@@ -84,6 +86,15 @@ function App() {
                   <Dashboard />
                 </div>
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compare/:productId"
+            element={
+              <div>
+                <Navbar />
+                <ProductComparison />
+              </div>
             }
           />
 
@@ -149,10 +160,22 @@ function App() {
           <Route
             path="/my-orders"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireVendor={true}>
                 <div>
                   <Navbar />
                   <MyOrders />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/customer-orders"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <Navbar />
+                  <CustomerOrders />
                 </div>
               </ProtectedRoute>
             }

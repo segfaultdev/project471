@@ -7,6 +7,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { UserRole } from '../users/entities/user.entity';
 import { OrderStatus } from './entities/order.entity';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('stores') // All routes start with /stores
 export class StoresController {
@@ -86,8 +87,16 @@ export class StoresController {
 
 
   @Post('orders')
-  createOrder(@Body() createOrderDto: CreateOrderDto) {
-    return this.storesService.createOrder(createOrderDto);
+  createOrder(@Body() createOrderDto: CreateOrderDto, @CurrentUser() user: any) {
+    return this.storesService.createOrder(createOrderDto, user?.id);
+  }
+
+  @Get('orders/my-orders')
+  getMyOrders(@CurrentUser() user: any) {
+    if (!user?.id) {
+      return [];
+    }
+    return this.storesService.findOrdersByCustomer(user.id);
   }
 
   @Get('orders')

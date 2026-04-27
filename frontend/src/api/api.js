@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+  import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -69,6 +69,7 @@ export const productsAPI = {
   getByStore: (storeId) => api.get(`/products/store/${storeId}`),
   getByCategory: (category) => api.get(`/products/category/${category}`),
   getMyProducts: () => api.get("/products/my-products"),
+  getSimilarProducts: (productId) => api.get(`/products/compare/${productId}`),
   create: (productData) => api.post("/products", productData),
   update: (id, productData) => api.patch(`/products/${id}`, productData),
   delete: (id) => api.delete(`/products/${id}`),
@@ -79,12 +80,24 @@ export const importAPI = {
   importSocialProduct: (url) => api.post("/api/import/social-product", { url }),
 };
 
+export const categoriesAPI = {
+  getAll: () => api.get("/categories"),
+  getOne: (id) => api.get(`/categories/${id}`),
+  getByStore: (storeId) => api.get(`/categories/store/${storeId}`),
+  getBySlug: (slug) => api.get(`/categories/slug/${slug}`),
+  getMyCategories: () => api.get("/categories/my-categories"),
+  create: (categoryData) => api.post("/categories", categoryData),
+  update: (id, categoryData) => api.patch(`/categories/${id}`, categoryData),
+  delete: (id) => api.delete(`/categories/${id}`),
+};
+
 export const ordersAPI = {
   create: (orderData) => api.post("/stores/orders", orderData),
   getAll: () => api.get("/stores/orders"),
   getOne: (id) => api.get(`/stores/orders/${id}`),
   getByStore: (storeId) => api.get(`/stores/${storeId}/orders`),
   getMyOrders: (storeId) => api.get(`/stores/${storeId}/orders`),
+  getMyCustomerOrders: () => api.get("/stores/orders/my-orders"),
   updateStatus: (id, statusOrPayload) => {
     const normalizedId = String(id || "").replace(/^\/?orders\//, "");
     const payload =

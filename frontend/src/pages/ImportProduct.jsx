@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { importAPI, productsAPI, storesAPI } from "../api/api";
+import { categoriesAPI, importAPI, productsAPI, storesAPI } from "../api/api";
 import { Download, ArrowLeft, Loader2, ExternalLink } from "lucide-react";
 import { useEffect } from "react";
 
@@ -19,13 +19,16 @@ const ImportProduct = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
 
   const [product, setProduct] = useState({
     name: "",
     description: "",
     price: "",
     stock: "",
-    category: "",
+    categoryId: "",
+    customCategory: "",
     storeId: "",
     image: "",
     caption: "",
@@ -35,6 +38,7 @@ const ImportProduct = () => {
 
   useEffect(() => {
     fetchStores();
+    fetchCategories();
   }, []);
 
   useEffect(() => {
@@ -59,11 +63,30 @@ const ImportProduct = () => {
             ? currentSelectedStoreId
             : defaultStoreId,
         );
+        fetchCategoriesForStore(defaultStoreId);
       }
     } catch (err) {
       console.error("Failed to fetch stores:", err);
     } finally {
       setStoresLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await categoriesAPI.getAll();
+      setCategories(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    }
+  };
+
+  const fetchCategoriesForStore = async (storeId) => {
+    try {
+      const response = await categoriesAPI.getByStore(storeId);
+      setCategories(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch store categories:', err);
     }
   };
 
@@ -94,7 +117,8 @@ const ImportProduct = () => {
           importedProduct.stock === undefined || importedProduct.stock === null
             ? ""
             : importedProduct.stock.toString(),
-        category: importedProduct.category || "",
+        categoryId: "",
+        customCategory: importedProduct.category || "",
         storeId: selectedStoreId,
         image: importedProduct.image || "",
         caption: importedProduct.caption || "",
@@ -117,13 +141,16 @@ const ImportProduct = () => {
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
     if (e.target.name === "storeId") {
       setSelectedStoreId(e.target.value);
+      fetchCategoriesForStore(e.target.value);
     }
 
     setProduct({
       ...product,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
 
@@ -160,12 +187,29 @@ const ImportProduct = () => {
     setSaving(true);
 
     try {
+      let categoryId = product.categoryId;
+
+      // If custom category is provided, create it first
+      if (product.customCategory.trim() && !categoryId) {
+        try {
+          const newCategoryRes = await categoriesAPI.create({
+            name: product.customCategory,
+            storeId: product.storeId,
+          });
+          categoryId = newCategoryRes.data.id;
+        } catch (err) {
+          setError('Failed to create category');
+          setSaving(false);
+          return;
+        }
+      }
+
       const productData = {
         name: product.name,
         description: product.description,
         price: parseFloat(product.price),
         stock: parseInt(product.stock, 10) || 0,
-        category: product.category,
+        categoryId: categoryId || null,
         storeId: product.storeId,
         images: product.image ? [product.image] : [],
       };
@@ -213,7 +257,7 @@ const ImportProduct = () => {
   return (
     <div className="min-h-screen bg-[#f6f1e7]">
       <div className="mx-auto max-w-4xl px-6 py-10 lg:px-8">
-        
+
         <section className="relative overflow-hidden rounded-[2.5rem] bg-emerald-950 p-8 text-white shadow-[0_30px_100px_rgba(8,28,21,0.2)] md:p-10">
           <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-lime-300/20 blur-3xl" />
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -288,7 +332,7 @@ const ImportProduct = () => {
           </div>
         )}
 
-        
+
         <section className="mt-8 rounded-[2rem] border border-emerald-950/10 bg-white/85 p-8 shadow-sm backdrop-blur">
           <div className="flex items-start gap-4 mb-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-950 text-lime-300">
@@ -338,7 +382,7 @@ const ImportProduct = () => {
           </p>
         </section>
 
-        
+
         {product.name && (
           <form
             onSubmit={handleSubmit}
@@ -441,15 +485,67 @@ const ImportProduct = () => {
                   >
                     Category
                   </label>
-                  <input
-                    type="text"
-                    id="category"
-                    name="category"
-                    value={product.category}
-                    onChange={handleChange}
-                    className="w-full rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-5 py-4 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
-                    placeholder="e.g., Fashion"
-                  />
+                  {!showNewCategoryInput ? (
+                    <div className="space-y-2">
+                      <select
+                        id="category"
+                        name="categoryId"
+                        value={product.categoryId}
+                        onChange={(e) => {
+                          setProduct({
+                            ...product,
+                            categoryId: e.target.value,
+                            customCategory: "",
+                          });
+                        }}
+                        className="w-full rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-5 py-4 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+                      >
+                        <option value="">Select a category...</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowNewCategoryInput(true)}
+                        className="w-full rounded-xl px-3 py-2 text-xs font-black text-emerald-950 transition hover:bg-lime-100"
+                      >
+                        Create New Category
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={product.customCategory}
+                        onChange={(e) => setProduct({
+                          ...product,
+                          customCategory: e.target.value,
+                          categoryId: "",
+                        })}
+                        placeholder="Enter new category name..."
+                        className="w-full rounded-2xl border border-emerald-950/10 bg-[#f6f1e7] px-5 py-4 font-semibold text-emerald-950 outline-none transition focus:border-lime-300 focus:ring-4 focus:ring-lime-300/30"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewCategoryInput(false);
+                          setProduct({
+                            ...product,
+                            customCategory: "",
+                            categoryId: "",
+                          });
+                        }}
+                        className="w-full rounded-xl px-3 py-2 text-xs font-black text-emerald-950/70 transition hover:bg-lime-100"
+                      >
+                        Back to Existing Categories
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -476,7 +572,7 @@ const ImportProduct = () => {
                 </select>
               </div>
 
-              
+
               <div className="border-t border-emerald-950/10 pt-6 mt-6">
                 <h3 className="text-lg font-black text-emerald-950 mb-4">
                   Product Image

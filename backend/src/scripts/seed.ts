@@ -9,29 +9,18 @@ import { Order, OrderStatus } from '../stores/entities/order.entity';
 import { OrderItem } from '../stores/entities/order-item.entity';
 
 function buildDataSource(): DataSource {
-  const dbType = (process.env.DB_TYPE || 'sqlite').toLowerCase();
   const isProduction = (process.env.NODE_ENV || '').toLowerCase() === 'production';
   const synchronize = (process.env.DB_SYNCHRONIZE || (!isProduction).toString()) === 'true';
   const logging = (process.env.DB_LOGGING || (!isProduction).toString()) === 'true';
 
-  if (dbType === 'postgres') {
-    return new DataSource({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
-      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-      entities: [User, Store, Product, Coupon, Order, OrderItem],
-      synchronize,
-      logging,
-    });
-  }
-
   return new DataSource({
-    type: 'sqlite',
-    database: process.env.SQLITE_PATH || 'database.sqlite',
+    type: 'postgres',
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT || '5432', 10),
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE,
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     entities: [User, Store, Product, Coupon, Order, OrderItem],
     synchronize,
     logging,
